@@ -1,0 +1,4 @@
+
+<p> In lobby for game </p>
+
+<%= content_tag :p, "Lobby Id: #{lobby_id}" %>

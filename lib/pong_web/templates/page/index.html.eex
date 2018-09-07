@@ -1,0 +1,8 @@
+
+<%= form_for @conn, Routes.page_path(@conn, :index), 
+    [as: :user], fn f -> %>
+  
+  <%= text_input f, :username, placeholder: "Username..." %>
+  <%= submit "Play!" %>
+
+<% end %>
