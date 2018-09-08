@@ -1,4 +1,6 @@
 
+# Dyanmic Supervisor
+
 defmodule Pong.Application do
   use Application
 
@@ -7,9 +9,13 @@ defmodule Pong.Application do
 
     # List all child processes to be supervised
     children = [
-      {Registry, keys: :unique, name: Pong.Registry},
-      {PongWeb.Game, game_id: args.game_id},
-      {PongWeb.Lobby, lobby_id: args.lobby_id},
+      {DynamicSupervisor, strategy: :one_for_one, 
+        name: Pong.LobbySupervisor}, # Module names are atoms.
+      {DynamicSupervisor, strategy: :one_for_one,
+        name: Pong.GameSupervisor},
+      {Registry, keys: :unique, name: Pong.LobbyRegistry},
+      {Registry, keys: :unique, name: Pong.GameRegistry},
+      {Pong.Lobby, lobby_id: "lobby:find_lobby"},
       PongWeb.Endpoint,
       PongWeb.Presence
     ]

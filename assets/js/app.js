@@ -26,7 +26,7 @@ const socket = new Socket("/socket", {
 const Lobby = {
   init() {
     socket.connect();
-    this.findLobbyChannel = socket.channel("find:lobby");
+    this.findLobbyChannel = socket.channel("lobby:find_lobby");
 
     this.findLobbyChannel.join()
       .receive("ok", (lobby_id) => {
@@ -51,6 +51,12 @@ const Lobby = {
       const votes = parseInt(split[0]);
       this.forceStart.innerHTML = `${votes}/6`
     });
+
+    this.lobbyChannel.on("game_start", (game_id) => {
+      const host = window.location.hostname;
+      const redir = `${host}/game/${game_id}`
+      window.location.replace(redir);
+    })
 
     this.forceStart.addEventListener("click", (e) => {
       e.preventDefault();
@@ -90,7 +96,7 @@ const App = {
           .receive("ok", onOk);
           .receive("error", onError);
         break;
-        
+
       case 100:
         this.gameChannel.push("move_right");
           .receive("ok", onOk);

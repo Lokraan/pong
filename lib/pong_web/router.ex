@@ -18,7 +18,6 @@ defmodule PongWeb.Router do
 
     get "/", PageController, :index
     get "/game", PageController, :game
-    get "/lobby", PageController, :lobby
   end
 
   # Other scopes may use custom stacks.

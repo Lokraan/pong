@@ -4,14 +4,10 @@ defmodule PongWeb.PageController do
 
   plug :require_user, when action not in [:index]
   
-  def index(conn, %{"user" => %{"username" => user}}) do
+  def index(conn, %{"user" => %{"username" => username}}) do
     render conn, "index.html"
-    |> put_session(:user_id, user)
-    |> redirect(to: "/lobby/find:lobby")
-  end
-
-  def lobby(conn, %{"lobby_id" => lobby_id}) do
-    render conn, "lobby.html", lobby_id
+    |> put_session(:user_name, username)
+    |> redirect(to: "/lobby/lobby:find_lobby")
   end
 
   def game(conn, %{"game_id" => game_id}) do

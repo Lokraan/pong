@@ -4,7 +4,7 @@ defmodule PongWeb.UserSocket do
   ## Channels
   # channel "room:*", PongWeb.RoomChannel
   channel "game:*", PadWeb.GameChannel
-  channel "lobby:*", PadWeb.LobbyChannel
+  channel "lobby:*", PadWeb.LobbyChanel
 
   def connect(%{"token" => token}, socket, _connect_info) do
     case Phoenix.Token.verify(socket, "user token", token, max_age: 86400) do

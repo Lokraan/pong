@@ -4,11 +4,9 @@ defmodule PongWeb.GameChannel do
 
   alias Pong.Game
 
-  def broadcast_move_from(pid, game_id, user_id, move) do
-    PongWeb.Endpoint.broadcast_from!(pid, game_id, "move", %{
-      user_id: user_id,
-      move: move
-    })
+  def broadcast_player_update_from(pid, game_id, user_id, player) do
+    PongWeb.Endpoint.broadcast_from!(pid, game_id,
+      "player_update", player)
   end
 
   def join("game:" <> game_id, _params, socket) do
@@ -22,7 +20,19 @@ defmodule PongWeb.GameChannel do
   end
 
   def handle_in("rotate_right", _, socket) do
+    Game.player_rotate_right(socket.assigns.user_id)
+  end
 
+  def handle_in("rotate_left", _, socket) do
+    Game.player_rotate_left(socket.assigns.user_id)
+  end
+
+  def handle_in("move_right", _, socket) do
+    Game.player_move_right(socktet.assigns.user_id)
+  end
+
+  def handle_in("move_left", _, socket) do
+    Game.player_move_left(socket.assigns.user_id)
   end
 
 end
