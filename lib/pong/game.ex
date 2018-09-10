@@ -31,7 +31,6 @@ defmodule Pong.Game do
     max_players: 6
   )
 
-
   @doc """
     The start_link modules, expects `opts` to be passed into
   it and expects opts to contain `:game_id` and `:players`
@@ -47,11 +46,12 @@ defmodule Pong.Game do
     game_id = Keyword.fetch!(opts, :game_id)
     player_data = Keyword.fetch!(opts, :players)
 
-    players = for data <- player_data, do: 
-      %Player{data.user_id, data.username}
-    end
+    """
+      # TODO
+        Set all players x_pos, y_pos, and wall_pos on intialization.
+    """
 
-    GenServer.start_link(__MODULE__, [game_id, players],
+    GenServer.start_link(__MODULE__, [game_id, player_data],
       name: {:via, Registry, {Pong.GameRegistry, game_id}}
     )
   end
@@ -71,7 +71,6 @@ defmodule Pong.Game do
 
     {:ok, state}
   end
-
 
   @doc """
     Finds the game's PID based on it's id by searching in the
@@ -156,7 +155,7 @@ defmodule Pong.Game do
   def handle_call({:player_leave, p_id}) do
     new_players = Map.remove(state.players, p_id)
   
-    {:noreply, {state | players: new_players}}
+    {:noreply, %{state | players: new_players}}
   end
 
   @doc """
@@ -179,12 +178,13 @@ defmodule Pong.Game do
   defp update_player_state(player_state, player) do
     new_players = Map.replace!(state.players, player.id, player)
 
-    new_state = %{state | players: new_players}}
+    new_state = %{state | players: new_players}
   end
 
   @doc """
-    Handle's `:move_right` by getting the Player struct that
-    corresponds to `p_id`
+    Handle's `:move_right` by getting the %Player struct that
+    corresponds to `p_id`, asking Player to move it right,
+    then updating the players and state states. 
   """
   def handle_call({:move_right, p_id}) do
     player = Map.get(state.players, p_id)
@@ -195,6 +195,11 @@ defmodule Pong.Game do
     {:reply, moved_player, new_state}
   end
 
+  @doc """
+    Handle's `:move_left` by getting the %Player struct that
+    corresponds to `p_id`, asking Player to move it leftt,
+    then updating the players and state states. 
+  """
   def handle_call({:move_left, player_id}) do
     player = Map.get(state.players, p_id)
 
@@ -204,6 +209,11 @@ defmodule Pong.Game do
     {:reply, moved_player, new_state}
   end
 
+  @doc """
+    Handle's `:rotate_right` by getting the %Player struct that
+    corresponds to `p_id`, asking Player to rotate it right,
+    then updating the players and state states. 
+  """
   def handle_call({:rotate_right, player_id}) do
     player = Map.get(state.players, p_id)
 
@@ -213,6 +223,11 @@ defmodule Pong.Game do
     {:reply, moved_player, new_state}
   end
 
+  @doc """
+    Handle's `:rotte_left` by getting the %Player struct that
+    corresponds to `p_id`, asking Player to move it left,
+    then updating the players and state states.
+  """
   def handle_call({:rotate_left, player_id}) do
     player = Map.get(state.players, p_id)
 

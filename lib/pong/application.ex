@@ -4,8 +4,7 @@
 defmodule Pong.Application do
   use Application
 
-  def start(_type, args) do
-    import Supervisor.Spec
+  def start(_type, _args) do
 
     # List all child processes to be supervised
     children = [

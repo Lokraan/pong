@@ -19,13 +19,9 @@ defmodule Pong.Lobby do
     )
   end
 
-  def init([lobby_id) do
+  def init([lobby_id]) do
     state = %Lobby{id: lobby_id}
     {:ok, state, state}
-  end
-
-  def update_lobby_id(pid, new_id) do
-    GenServer.call({:update_id, new_id})
   end
 
   def find_lobby!(lobby_id) do

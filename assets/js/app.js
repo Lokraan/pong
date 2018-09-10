@@ -41,10 +41,6 @@ const Lobby = {
 
   bind() {
     this.forceStart = document.getElemntById("force-start");
-    this.lobbyChannel.on("game_id", (game_id) => {
-      App.init(game_id);
-      this.lobbyChannel.leave();
-    });
 
     this.lobbyChannel.on("force_start_vote", (user) => {
       const split = this.forceStart.innerHTML.split("/");
@@ -55,6 +51,10 @@ const Lobby = {
     this.lobbyChannel.on("game_start", (game_id) => {
       const host = window.location.hostname;
       const redir = `${host}/game/${game_id}`
+
+      App.init(game_id);
+      this.lobbyChannel.leave();
+      
       window.location.replace(redir);
     })
 
