@@ -1,0 +1,10 @@
+<div class="d-left justify-content-center">
+  Ping !
+</div>
+
+<div class="d-flex justify-content-center">
+  <%= form_for @conn, Routes.page_path(@conn, :play), [as: :user], fn f -> %>
+    <%= text_input f, :username, placeholder: "Username..." %>
+    <%= submit "Play!", class: "btn btn-primary" %>
+  <% end %>
+</div>
