@@ -5,31 +5,34 @@ defmodule PingWeb.LobbyChannel do
 
   use PingWeb, :channel
 
-  alias Ping.Lobby
-  alias Ping.Player
-  
+  alias Ping.{Lobby, LobbySupervisor}
+
   @doc """
-    All users are ported to the default `find_lobby` lobby.
+  All users are ported to the default `find_lobby` lobby.
   At this point all existing lobby processes are retrieved
   from the LobbySupervisord. If none exist, then a new lobby
   is generated and the player is assigned to it. If lobbies do
   exist then the player is assigned to one at random.
   """
   def join("lobby:find", _params, _socket) do
-    lobbies = DynamicSupervisor.which_children(Ping.LobbySupervisor)
+    lobbies = DynamicSupervisor.which_children(LobbySupervisor)
     case lobbies do
       # no lobbies exist
       [] -> 
         # generate a new lobby
         lobby_id = gen_id()
-        DynamicSupervisor.start_child(Ping.LobbySupervisor, {
-          Lobby, lobby_id: lobby_id})
+
+        {:ok, pid} = Lobby.start_link([lobby_id: lobby_id])
         
+        IO.inspect pid
+        IO.inspect Lobby.get_id(pid), label: :get_pid
+        IO.inspect DynamicSupervisor.which_children(LobbySupervisor)
+
         {:ok, lobby_id}
 
       # lobbies do exist
-      _ ->
-        {:undefined, pid, _, _} = Enum.random(lobbies)
+      [h | t] ->
+        {:undefined, pid, _, _} = h
         lobby_id = Lobby.get_id(pid)
 
         {:ok, lobby_id}
@@ -37,19 +40,20 @@ defmodule PingWeb.LobbyChannel do
   end
 
   @doc """
-    Handles players joining the lobby by calling `Lobby.player_join`
+  Handles players joining the lobby by calling `Lobby.player_join`
   and handling the responses from the function.
-    On `:ok` the player succesfully joined the lobby and the lobby_id
+  
+  On `:ok` the player succesfully joined the lobby and the lobby_id
   is assigned to the socket. After this `{:ok, "Joined"}` is
   returned.
-    On `:full` the player that just joined was the last player to be
+  On `:full` the player that just joined was the last player to be
   able to join and the game is now being created. After the game is 
   created, the game_id is broadcasted to all players in the lobby.
-    On `:lobby_already_full` the lobby has already been filled up,
+  On `:lobby_already_full` the lobby has already been filled up,
   returns `{:error, "Lobby already full."}
   """
   def join("lobby:" <> lobby_id, _params, socket) do
-    player = %Player{
+    player = %{
       user_id: socket.assigns.user_id,
       username: socket.assigns.username
     }
@@ -58,7 +62,7 @@ defmodule PingWeb.LobbyChannel do
       :ok ->
         assign(socket, :lobby_id, lobby_id)
 
-        {:ok, "Joined"}
+        {:ok, :joined}
 
       :now_full ->
         assign(socket, :lobby_id, lobby_id)
@@ -69,17 +73,17 @@ defmodule PingWeb.LobbyChannel do
           Ping.Game, game_id: game_id, players: players
         })
 
-        PingWeb.Endpoint.broadcast!(lobby_id, "game_start", game_id)
+        PingWeb.Endpoint.broadcast!(lobby_id, "game:start", game_id)
 
-        {:ok, "Last player joined."}
+        {:ok, :joined}
 
       :lobby_already_full ->
-        {:error, "Lobby is full"} # search for a new lobby
+        {:error, :full} # search for a new lobby
     end
   end
 
   @doc """
-    Handles player leaving by calling `Lobby.player_leave`
+  Handles player leaving by calling `Lobby.player_leave`
   """
   def handle_in(:player_leave, _, socket) do
     lobby_id = socket.assigns.lobby_id
@@ -87,10 +91,6 @@ defmodule PingWeb.LobbyChannel do
     Lobby.player_leave(lobby_id, user_id)
   end
 
-  @doc """
-    Generates a random for the lobby out of 8 bytes.
-  (2^64 possibilities)
-  """
   defp gen_id() do
     :crypto.strong_rand_bytes(8)
     |> Base.url_encode64()

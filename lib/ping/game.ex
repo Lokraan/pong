@@ -67,10 +67,10 @@ defmodule Ping.Game do
 
   @doc """
   Finds the game's PID based on it's id by searching in the
-  `Pad.GameRegistry`.
+  `Ping.GameRegistry`.
   """
   def find_game!(game_id) do
-    case Registry.lookup(Pad.GameRegistry, game_id) do
+    case Registry.lookup(Ping.GameRegistry, game_id) do
       [{pid, _}] ->
         pid
       [] ->

@@ -9,7 +9,7 @@ defmodule PingWeb.PageController do
 
   def play(conn, %{"user" => %{"username" => username}}) do
     conn
-    |> put_session(:user_name, username)
+    |> put_session(:username, username)
     |> redirect(to: "/find_game")
   end
 
@@ -23,10 +23,10 @@ defmodule PingWeb.PageController do
   end
 
   defp require_user(conn, _) do
-    if user_name = get_session(conn, :user_name) do
+    if username = get_session(conn, :username) do
       conn
-      |> assign(:user_name, user_name)
-      |> assign(:user_token, Phoenix.Token.sign(conn, "user token", user_name))
+      |> assign(:username, username)
+      |> assign(:user_token, Phoenix.Token.sign(conn, "user token", username))
     else
       conn
       |> put_flash(:error, "Create user to play!")

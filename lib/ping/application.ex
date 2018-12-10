@@ -6,18 +6,15 @@ defmodule Ping.Application do
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
     children = [
       {DynamicSupervisor, strategy: :one_for_one, 
-        name: Ping.LobbySupervisor}, # Module names are atoms.
+        name: Ping.LobbySupervisor},
       {DynamicSupervisor, strategy: :one_for_one,
         name: Ping.GameSupervisor},
       {Registry, keys: :unique, name: Ping.LobbyRegistry},
       {Registry, keys: :unique, name: Ping.GameRegistry},
       # Start the endpoint when the application starts
       PingWeb.Endpoint
-      # Starts a worker by calling: Ping.Worker.start_link(arg)
-      # {Ping.Worker, arg},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

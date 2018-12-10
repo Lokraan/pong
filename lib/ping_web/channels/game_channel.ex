@@ -3,7 +3,7 @@ defmodule PingWeb.GameChannel do
 
   alias Ping.Game
 
-  def broadcast_player_game_update(pid, game_id, data) do
+  def broadcast_game_update(game_id, data) do
     PingWeb.Endpoint.broadcast!("game:#{game_id}", "game:update", data)
   end
 
@@ -18,6 +18,6 @@ defmodule PingWeb.GameChannel do
   end
 
   def handle_in("command", %{"command" => command}, socket) do
-    Game.handle_command("command", socket.assigns.game_id, socket.assigns.user_id)
+    Game.handle_command(command, socket.assigns.game_id, socket.assigns.user_id)
   end
 end

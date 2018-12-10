@@ -11,19 +11,28 @@ defmodule Ping.Lobby do
 
   def start_link(opts) do
     lobby_id = Keyword.fetch!(opts, :lobby_id)
-
-    GenServer.start_link(__MODULE__, [lobby_id], 
+    
+    IO.inspect GenServer.start_link(__MODULE__, [lobby_id], 
       name: {:via, Registry, {Ping.LobbyRegistry, lobby_id}}
     )
+
+    #IO.inspect pid
+
+    #Process.monitor(pid)
+    
+    #IO.inspect pid, label: "pid"
+    #{:ok, pid}
   end
 
   def init([lobby_id]) do
+    IO.inspect lobby_id, label: :init
     state = %Lobby{id: lobby_id}
+
     {:ok, state, state}
   end
 
   def find_lobby!(lobby_id) do
-    case Registry.lookup(Pad.GameRegistry, lobby_id) do
+    case Registry.lookup(Ping.LobbyRegistry, lobby_id) do
       [{pid, _}] ->
         pid
       [] ->
@@ -33,10 +42,12 @@ defmodule Ping.Lobby do
 
   def get_id(pid), do: GenServer.call(pid, :get_id)
 
-  def player_join(lobby_id, player_id) do
+  def player_join(lobby_id, player) do
+    IO.inspect find_lobby!(lobby_id)
+
     lobby_id
     |> find_lobby!()
-    |> GenServer.call({:player_join, player_id})
+    |> GenServer.call({:player_join, player})
   end
 
   def player_leave(lobby_id, player_id) do
@@ -64,7 +75,7 @@ defmodule Ping.Lobby do
     players = length(Map.keys(state.players))
     if players < state.max_players do
 
-      new_players = Map.put(state.players, player.id, player)
+      new_players = Map.put(state.players, player.user_id, player)
 
       response = ((players + 1) == state.max_players) && :now_full || :ok
       {:reply, response, %{state | players: new_players}}
