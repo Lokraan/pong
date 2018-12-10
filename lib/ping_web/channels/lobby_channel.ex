@@ -15,7 +15,7 @@ defmodule PingWeb.LobbyChannel do
   is generated and the player is assigned to it. If lobbies do
   exist then the player is assigned to one at random.
   """
-  def join("lobby:find_lobby", _params, _socket) do
+  def join("lobby:find", _params, _socket) do
     lobbies = DynamicSupervisor.which_children(Ping.LobbySupervisor)
     case lobbies do
       # no lobbies exist

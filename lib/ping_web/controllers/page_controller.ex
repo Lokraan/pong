@@ -10,15 +10,16 @@ defmodule PingWeb.PageController do
   def play(conn, %{"user" => %{"username" => username}}) do
     conn
     |> put_session(:user_name, username)
-    |> redirect(to: "/lobby/lobby:find_lobby")
+    |> redirect(to: "/find_game")
   end
 
   def game(conn, %{"game_id" => game_id}) do
     render(conn, "game.html", game_id: game_id)
   end
 
-  def lobby(conn, %{"lobby_id" => lobby_id}) do
-    render(conn, "lobby.html", lobby_id: lobby_id)
+  def find_game(conn, _params) do
+    PingWeb.Endpoint.broadcast!("/socket", "lobby:find", %{})
+    render(conn, "lobby.html")
   end
 
   defp require_user(conn, _) do

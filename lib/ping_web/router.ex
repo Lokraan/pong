@@ -18,7 +18,7 @@ defmodule PingWeb.Router do
 
     get "/", PageController, :index
     get "/game", PageController, :game
-    get "/lobby/:lobby_id", PageController, :lobby
+    get "/find_game", PageController, :find_game
     post "/", PageController, :play
   end
 

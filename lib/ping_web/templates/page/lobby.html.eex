@@ -1,3 +1,5 @@
-<p> In lobby for game </p>
 
-<%= content_tag :p, "Lobby Id: #{@lobby_id}" %>
+<div id="main">
+  <h1 class="flex justify-center"> ping </h1>
+  <h1 class="flex justify-center"> In lobby for game </h1>
+</div>

@@ -22,5 +22,9 @@
 }
 
 .justify {
-  justify-content: center; 
+  display: flex;
+
+  &-center {
+    justify-content: center;
+  } 
 }
