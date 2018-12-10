@@ -1,10 +1,12 @@
-<div class="d-left justify-content-center">
-  Ping !
-</div>
+<div id="main">
+  <div class="flex justify">
+    Ping !
+  </div>
 
-<div class="d-flex justify-content-center">
-  <%= form_for @conn, Routes.page_path(@conn, :play), [as: :user], fn f -> %>
-    <%= text_input f, :username, placeholder: "Username..." %>
-    <%= submit "Play!", class: "btn btn-primary" %>
-  <% end %>
+  <div class="flex justify">
+    <%= form_for @conn, Routes.page_path(@conn, :play), [as: :user],fn f -> %>
+      <%= text_input f, :username, [placeholder: "Username...", id: "userNameInput", class: "flex flex-center justify"] %>
+      <%= submit "PLAY", [id: "playButton", class: "flex flex-center justify"] %>
+    <% end %>
+  </div>
 </div>

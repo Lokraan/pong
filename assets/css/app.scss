@@ -1,8 +1,10 @@
 /* Phoenix flash messages */
 .alert:empty { display: none; }
 
-// Bootstrap Core CSS
-@import "node_modules/bootstrap/scss/bootstrap";
-
 // project
+@import "_flex.scss";
 @import "_layout.scss";
+
+@import "/themes/_default.scss";
+
+@import "/pages/_index.scss";
