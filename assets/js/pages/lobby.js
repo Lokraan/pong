@@ -56,10 +56,6 @@ export default class PageLobbyView extends MainView {
       .receive("error", (info) => {
         console.log(info)
       })
-    
-    setInterval(() => {
-      console.log(this.findLobbyChannel)
-    }, 100)
   }
 
   unmount() {

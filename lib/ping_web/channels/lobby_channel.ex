@@ -14,11 +14,9 @@ defmodule PingWeb.LobbyChannel do
   is generated and the player is assigned to it. If lobbies do
   exist then the player is assigned to one at random.
   """
-  def join("lobby:find", _params, _socket) do
+  def join("lobby:find", _params, socket) do
     lobbies = DynamicSupervisor.which_children(LobbySupervisor)
-    IO.puts "this guy wants to join"
     case lobbies do
-      # no lobbies exist
       [] -> 
         # generate a new lobby
         lobby_id = gen_id()
@@ -27,14 +25,14 @@ defmodule PingWeb.LobbyChannel do
           {Lobby, lobby_id: lobby_id}) 
         lobby_id = Lobby.get_id(pid)
 
-        {:ok, lobby_id}
+        {:ok, Lobby.topic(lobby_id), socket}
 
       # lobbies do exist
       [h | _] ->
         {:undefined, pid, _, _} = h
         lobby_id = Lobby.get_id(pid)
 
-        {:ok, lobby_id}
+        {:ok, Lobby.topic(lobby_id), socket}
     end
   end
 
@@ -52,7 +50,6 @@ defmodule PingWeb.LobbyChannel do
   returns `{:error, "Lobby already full."}
   """
   def join("lobby:" <> lobby_id, _params, socket) do
-    IO.puts "this guy wants to join2"
     player = %{
       user_id: socket.assigns.user_id,
       username: socket.assigns.username
@@ -62,7 +59,7 @@ defmodule PingWeb.LobbyChannel do
       :ok ->
         assign(socket, :lobby_id, lobby_id)
 
-        {:ok, :joined}
+        {:ok, :joined, socket}
 
       :now_full ->
         assign(socket, :lobby_id, lobby_id)
@@ -76,10 +73,13 @@ defmodule PingWeb.LobbyChannel do
         PingWeb.Endpoint.broadcast!(Lobby.topic(lobby_id), "game:start",
           %{game_id: game_id})
 
-        {:ok, :joined}
+        {:ok, :joined, socket}
 
-      :lobby_already_full ->
-        {:error, :full} # search for a new lobby
+      :full ->
+        {:error, :full, socket} # search for a new lobby
+    
+      :already_joined ->
+        {:error, :already_joined, socket}
     end
   end
 

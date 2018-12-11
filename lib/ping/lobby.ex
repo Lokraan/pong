@@ -67,14 +67,18 @@ defmodule Ping.Lobby do
 
   def handle_call({:player_join, player}, _from, state) do
     players = length(Map.keys(state.players))
-    if players < state.max_players do
+    if not Map.has_key?(state.players, player.user_id) do
+      if players < state.max_players do
 
-      new_players = Map.put(state.players, player.user_id, player)
+        new_players = Map.put(state.players, player.user_id, player)
 
-      response = ((players + 1) == state.max_players) && :now_full || :ok
-      {:reply, response, %{state | players: new_players}}
+        response = ((players + 1) == state.max_players) && :now_full || :ok
+        {:reply, response, %{state | players: new_players}}
+      else
+        {:reply, :full, state}
+      end
     else
-      {:reply, :lobby_already_full, state}
+      {:reply, :already_joined, state}
     end
   end
 

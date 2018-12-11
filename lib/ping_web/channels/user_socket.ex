@@ -18,8 +18,14 @@ defmodule PingWeb.UserSocket do
   # performing token verification on connect.
   def connect(%{"token" => token}, socket, _connect_info) do
     case Phoenix.Token.verify(socket, "user token", token, max_age: 86400) do
-      {:ok, user_id} ->
-        {:ok, assign(socket, :user_id, user_id)}
+      {:ok, username} ->
+        socket = 
+          socket
+          |> assign(:username, username)
+          |> assign(:user_id, gen_id())
+
+        IO.inspect socket.assigns
+        {:ok, socket}
 
       {:error, _reason} ->
         :error
@@ -37,4 +43,10 @@ defmodule PingWeb.UserSocket do
   #
   # Returning `nil` makes this socket anonymous.
   def id(socket), do: "user_socket:#{socket.assigns.user_id}"
+
+  defp gen_id do
+    :crypto.strong_rand_bytes(8)
+    |> Base.url_encode64()
+    |> binary_part(0, 8)
+  end
 end
