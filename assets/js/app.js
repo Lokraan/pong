@@ -12,37 +12,23 @@ import css from "../css/app.scss"
 import "phoenix_html"
 
 // Import local files
-import socket from "./socket"
+import loadView from "./viewLoader"
 
-import Lobby from "./lib/lobby"
-import Game from "./lib/game"
+function handleDOMContentLoaded() {
+  // Get the current view name
+  const viewName = document.getElementsByTagName('body')[0].dataset.jsViewName
 
-const App = {
-  init(socket) {
-    this.socket = socket
-    this.lobby = null
-    this.game = null
+  // Load view class and mount it
+  const ViewClass = loadView(viewName)
+  const view = new ViewClass()
+  view.mount()
 
-    console.log("wow")
-    this.bind()
-  },
-
-  bind() {
-    console.log("woww", this.socket)
-    this.socket.onMessage((data) => {
-      console.log("wow OK", data)
-      this.findLobbyChannel = this.socket.channel("lobby:find")
-      this.findLobbyChannel.join()
-        .receive("ok", (lobby_id) => {
-          this.lobby = Lobby.init(this.socket, lobby_id)        
-        })
-    })
-
-    this.socket.onMessage((data) => {
-      console.log(data)
-      this.game = Game.init(this.socket, game_id)
-    })
-  }
+  window.currentView = view
 }
 
-App.init(socket)
+function handleDocumentUnload() {
+  window.currentView.unmount()
+}
+
+window.addEventListener('DOMContentLoaded', handleDOMContentLoaded, false)
+window.addEventListener('unload', handleDocumentUnload, false)

@@ -1,3 +1,7 @@
+import MainView from './main';
+
+import socket from "../socket"
+
 const Lobby = {
   init(socket, lobby_id) {
     this.socket = socket
@@ -28,8 +32,6 @@ const Lobby = {
       const host = window.location.hostname
       const redir = `${host}/game/${game_id}`
 
-      this.lobbyChannel.leave()
-      
       window.location.replace(redir)
     })
 
@@ -40,4 +42,29 @@ const Lobby = {
   }
 }
 
-export default Lobby
+export default class PageLobbyView extends MainView {
+  mount() {
+    super.mount()
+    console.log("LobbyView mounted")
+
+    this.findLobbyChannel = socket.channel("lobby:find")
+    this.findLobbyChannel.join()
+      .receive("ok", (lobby_id) => {
+        console.log(lobby_id)
+        Lobby.init(socket, lobby_id)
+      })
+      .receive("error", (info) => {
+        console.log(info)
+      })
+    
+    setInterval(() => {
+      console.log(this.findLobbyChannel)
+    }, 100)
+  }
+
+  unmount() {
+    super.unmount()
+
+    // this.lobby.lobbyChannel.leave()
+  }
+}

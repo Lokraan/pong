@@ -1,6 +1,5 @@
 const Game = {
-  init(game_id) {
-    socket.connect()
+  init(socket, game_id) {
     this.gameChannel = socket.channel(game_id)
     this.commands = {
       119: "rotate_right",

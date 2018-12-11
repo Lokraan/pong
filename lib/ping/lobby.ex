@@ -4,7 +4,7 @@ defmodule Ping.Lobby do
 
   alias __MODULE__
   defstruct(
-    id: :string,
+    id: :wow,
     players: %{},
     max_players: 6
   )
@@ -12,23 +12,17 @@ defmodule Ping.Lobby do
   def start_link(opts) do
     lobby_id = Keyword.fetch!(opts, :lobby_id)
     
-    IO.inspect GenServer.start_link(__MODULE__, [lobby_id], 
+    GenServer.start_link(__MODULE__, [lobby_id], 
       name: {:via, Registry, {Ping.LobbyRegistry, lobby_id}}
     )
-
-    #IO.inspect pid
-
-    #Process.monitor(pid)
-    
-    #IO.inspect pid, label: "pid"
-    #{:ok, pid}
   end
 
   def init([lobby_id]) do
-    IO.inspect lobby_id, label: :init
-    state = %Lobby{id: lobby_id}
+    state = %Lobby{id: lobby_id,
+      max_players: config(:max_players) || 6
+    }
 
-    {:ok, state, state}
+    {:ok, state}
   end
 
   def find_lobby!(lobby_id) do
@@ -40,11 +34,11 @@ defmodule Ping.Lobby do
     end
   end
 
+  def topic(lobby_id), do: "lobby:#{lobby_id}"
+
   def get_id(pid), do: GenServer.call(pid, :get_id)
 
   def player_join(lobby_id, player) do
-    IO.inspect find_lobby!(lobby_id)
-
     lobby_id
     |> find_lobby!()
     |> GenServer.call({:player_join, player})
@@ -87,5 +81,10 @@ defmodule Ping.Lobby do
   def handle_call({:player_leave, player_id}, _from, state) do
     new_players = Map.delete(state.players, player_id)
     {:reply, :ok, %{state | players: new_players}}
-  end 
+  end
+
+  @spec config(atom()) :: term
+  defp config(key) do
+    Application.get_env(:ping, __MODULE__, [])[key]
+  end
 end

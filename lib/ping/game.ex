@@ -59,7 +59,6 @@ defmodule Ping.Game do
   )
   """
   def init([game_id, players]) do
-    IO.puts "Init game_id: #{game_id}"
     state = %Game{game_id: game_id, players: players}
 
     {:ok, state}

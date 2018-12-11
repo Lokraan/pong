@@ -18,7 +18,6 @@ defmodule PingWeb.PageController do
   end
 
   def find_game(conn, _params) do
-    PingWeb.Endpoint.broadcast!("/socket", "lobby:find", %{})
     render(conn, "lobby.html")
   end
 

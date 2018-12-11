@@ -16,22 +16,21 @@ defmodule PingWeb.LobbyChannel do
   """
   def join("lobby:find", _params, _socket) do
     lobbies = DynamicSupervisor.which_children(LobbySupervisor)
+    IO.puts "this guy wants to join"
     case lobbies do
       # no lobbies exist
       [] -> 
         # generate a new lobby
         lobby_id = gen_id()
 
-        {:ok, pid} = Lobby.start_link([lobby_id: lobby_id])
-        
-        IO.inspect pid
-        IO.inspect Lobby.get_id(pid), label: :get_pid
-        IO.inspect DynamicSupervisor.which_children(LobbySupervisor)
+        {:ok, pid} = DynamicSupervisor.start_child(LobbySupervisor, 
+          {Lobby, lobby_id: lobby_id}) 
+        lobby_id = Lobby.get_id(pid)
 
         {:ok, lobby_id}
 
       # lobbies do exist
-      [h | t] ->
+      [h | _] ->
         {:undefined, pid, _, _} = h
         lobby_id = Lobby.get_id(pid)
 
@@ -53,6 +52,7 @@ defmodule PingWeb.LobbyChannel do
   returns `{:error, "Lobby already full."}
   """
   def join("lobby:" <> lobby_id, _params, socket) do
+    IO.puts "this guy wants to join2"
     player = %{
       user_id: socket.assigns.user_id,
       username: socket.assigns.username
@@ -73,7 +73,8 @@ defmodule PingWeb.LobbyChannel do
           Ping.Game, game_id: game_id, players: players
         })
 
-        PingWeb.Endpoint.broadcast!(lobby_id, "game:start", game_id)
+        PingWeb.Endpoint.broadcast!(Lobby.topic(lobby_id), "game:start",
+          %{game_id: game_id})
 
         {:ok, :joined}
 
