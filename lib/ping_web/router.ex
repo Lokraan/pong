@@ -17,7 +17,7 @@ defmodule PingWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
-    get "/game", PageController, :game
+    get "/game/:game_id", PageController, :game
     get "/find_game", PageController, :find_game
     post "/", PageController, :play
   end

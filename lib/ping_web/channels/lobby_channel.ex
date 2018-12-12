@@ -57,12 +57,12 @@ defmodule PingWeb.LobbyChannel do
 
     case Lobby.player_join(lobby_id, player) do
       :ok ->
-        assign(socket, :lobby_id, lobby_id)
+        socket = assign(socket, :lobby_id, lobby_id)
 
         {:ok, :joined, socket}
 
       :now_full ->
-        assign(socket, :lobby_id, lobby_id)
+        socket = assign(socket, :lobby_id, lobby_id)
 
         game_id = gen_id()
         players = Lobby.get_players(lobby_id)
@@ -73,23 +73,29 @@ defmodule PingWeb.LobbyChannel do
         PingWeb.Endpoint.broadcast!(Lobby.topic(lobby_id), "game:start",
           %{game_id: game_id})
 
-        {:ok, :joined, socket}
+        {:ok, %{game_id: game_id}, socket}
+
+      :already_joined ->
+        socket = assign(socket, :lobby_id, lobby_id)
+
+        {:ok, :already_joined, socket}
 
       :full ->
-        {:error, :full, socket} # search for a new lobby
-    
-      :already_joined ->
-        {:error, :already_joined, socket}
+        {:error, :full}
     end
   end
 
   @doc """
-  Handles player leaving by calling `Lobby.player_leave`
+  Handles a player's leave.
   """
-  def handle_in(:player_leave, _, socket) do
+  def handle_in("lobby:leave", _, socket) do
+    IO.inspect "handling leave"
     lobby_id = socket.assigns.lobby_id
     user_id = socket.assigns.user_id
+
     Lobby.player_leave(lobby_id, user_id)
+
+    {:reply, {:ok, %{}}, socket}
   end
 
   defp gen_id() do

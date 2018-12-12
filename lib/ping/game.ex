@@ -22,7 +22,8 @@ defmodule Ping.Game do
   defstruct(
     game_id: :string,
     players: %{},
-    balls: %{}
+    balls: %{},
+    max_players: 6
   )
 
   @doc """
@@ -59,7 +60,20 @@ defmodule Ping.Game do
   )
   """
   def init([game_id, players]) do
-    state = %Game{game_id: game_id, players: players}
+    new_players = %{}
+    Enum.each(players, fn {k, v} ->
+      player = %Player{
+        username: v.username,
+        user_id: v.user_id
+      }
+      Map.put(players, k, player)
+    end)
+
+    state = %Game{
+      game_id: game_id,
+      players: players,
+      max_players: Application.get_env(:ping, Ping, [])[:max_players] || 6
+    }
 
     {:ok, state}
   end
@@ -77,6 +91,15 @@ defmodule Ping.Game do
     end
   end
 
+  def find_game(game_id) do
+    case Registry.lookup(Ping.GameRegistry, game_id) do
+      [{pid, _}] ->
+        {:ok, pid}
+      [] ->
+        {:error, nil}
+    end
+  end
+
   @doc """
   Calls genserver `:player_leave`
   """
@@ -84,6 +107,12 @@ defmodule Ping.Game do
     game_id
     |> find_game!()
     |> GenServer.call({:player_leave, player_id})
+  end
+
+  def has_player?(game_id, player_id) do
+    game_id
+    |> find_game!()
+    |> GenServer.call({:has_player, player_id})
   end
 
   @doc """
@@ -105,7 +134,7 @@ defmodule Ping.Game do
   end
 
   @doc """
-  Calls genserver `:move_right` and passes in player_id.
+  Calls genserver `:handle_command` and passes in player_id.
   """
   def handle_command(game_id, command, player_id) do
     game_id
@@ -114,12 +143,20 @@ defmodule Ping.Game do
   end
 
   @doc """
-    Handle's `:player_leave` by removing the player's data.
+  Handle's `:player_leave` by removing the player's data.
   """
   def handle_call({:player_leave, p_id}, _from, state) do
     new_players = Map.delete(state.players, p_id)
   
-    {:noreply, %{state | players: new_players}}
+    state = %{state | players: new_players}
+    {:reply, state, state}
+  end
+
+  @doc """
+  Returns whether or not 
+  """
+  def handle_call({:has_player, player_id}, _from, state) do
+    {:reply, Map.has_key?(state.players, player_id), state}
   end
 
   @doc """
@@ -161,9 +198,9 @@ defmodule Ping.Game do
   defp update_player_state(state, player) do
     new_players = Map.replace!(state.players, player.id, player)
 
-    new_state = %{state | players: new_players}
+    state = %{state | players: new_players}
   
-    {:reply, new_state, new_state}
+    {:reply, state, state}
   end
 
   defp update_player_state(command, state, player) do

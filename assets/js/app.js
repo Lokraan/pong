@@ -13,6 +13,7 @@ import "phoenix_html"
 
 // Import local files
 import loadView from "./viewLoader"
+import socket from "./socket"
 
 function handleDOMContentLoaded() {
   // Get the current view name
@@ -21,9 +22,9 @@ function handleDOMContentLoaded() {
   // Load view class and mount it
   const ViewClass = loadView(viewName)
   const view = new ViewClass()
-  view.mount()
-
   window.currentView = view
+
+  window.currentView.mount()
 }
 
 function handleDocumentUnload() {
@@ -32,3 +33,8 @@ function handleDocumentUnload() {
 
 window.addEventListener('DOMContentLoaded', handleDOMContentLoaded, false)
 window.addEventListener('unload', handleDocumentUnload, false)
+
+// window.onbeforeunload = function(event) {
+//   console.log("ok?")
+//   socket.disconnect(() => {}, 1000, "hello")
+// }

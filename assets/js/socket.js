@@ -8,7 +8,14 @@
 // from the params if you are not using authentication.
 import {Socket} from "phoenix"
 
-let socket = new Socket("/socket", {params: {token: window.userToken}})
+const params = {
+  token: window.userToken,
+  username: window.username,
+  user_id: window.userId,
+  game_id: window.gameId
+}
+
+let socket = new Socket("/socket", {params: params})
 socket.connect()
 
 // When you connect, you'll often need to authenticate the client.

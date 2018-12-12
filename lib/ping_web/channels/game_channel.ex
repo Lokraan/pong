@@ -8,16 +8,27 @@ defmodule PingWeb.GameChannel do
   end
 
   def join("game:" <> game_id, _params, socket) do
-    game_state = Game.get_state(game_id)
-
-    if(Kernel.map_size(game_state.users) > game_state.max_users) do
-      {:ok, socket}
+    if Game.has_player?(game_id, socket.assigns.user_id) do
+      {:ok, :joined, socket}
     else
-      {:error, socket}
+      {:error, :not_authorized}
     end
   end
 
-  def handle_in("command", %{"command" => command}, socket) do
+  def handle_in("game:command", %{"command" => command}, socket) do
     Game.handle_command(command, socket.assigns.game_id, socket.assigns.user_id)
+  end
+
+    @doc """
+  Handles a player's leave.
+  """
+  def handle_in("game:leave", _, socket) do
+    IO.inspect "handling leave"
+    game_id = socket.assigns.game_id
+    user_id = socket.assigns.user_id
+
+    Game.player_leave(game_id, user_id)
+
+    {:reply, {:ok, %{}}, socket}
   end
 end

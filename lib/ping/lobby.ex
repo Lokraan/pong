@@ -18,8 +18,9 @@ defmodule Ping.Lobby do
   end
 
   def init([lobby_id]) do
-    state = %Lobby{id: lobby_id,
-      max_players: config(:max_players) || 6
+    state = %Lobby{
+      id: lobby_id,
+      max_players: Application.get_env(:ping, Ping, [])[:max_players] || 6
     }
 
     {:ok, state}
@@ -66,6 +67,8 @@ defmodule Ping.Lobby do
   end
 
   def handle_call({:player_join, player}, _from, state) do
+    IO.inspect state.players, label: :players
+    IO.inspect player, label: :player
     players = length(Map.keys(state.players))
     if not Map.has_key?(state.players, player.user_id) do
       if players < state.max_players do
@@ -89,6 +92,6 @@ defmodule Ping.Lobby do
 
   @spec config(atom()) :: term
   defp config(key) do
-    Application.get_env(:ping, __MODULE__, [])[key]
+    Application.get_env(:ping, Ping, [])[key]
   end
 end

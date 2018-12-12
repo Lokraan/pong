@@ -1,6 +1,5 @@
 const Game = {
   init(socket, game_id) {
-    this.gameChannel = socket.channel(game_id)
     this.commands = {
       119: "rotate_right",
       114: "rotate_left",
@@ -8,7 +7,18 @@ const Game = {
       97: "move_left"
     }
 
+    this.gameChannel = socket.channel(game_id)
+    this.gameChannel.join()
+      .receive("ok", (resp) => {
+        console.log(`Game ${resp}`)
+      })
+      .receive("error", (resp) => {
+        console.log(`Game ${resp}`)
+      })
+
     this.bind()
+
+    return this
   },
 
   bind() {
@@ -27,6 +37,12 @@ const Game = {
           .receive("error", (reasons) =>  console.log(reasons))
       }
     })
+  },
+
+  disconnect() {
+    if(this.gameChannel)
+      this.gameChannel.push("game:leave", {})
+        .receive("ok", (resp) => console.log(resp, "disconnect2")) 
   }
 }
 

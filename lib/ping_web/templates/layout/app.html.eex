@@ -22,8 +22,11 @@
 
     </div> <!-- /container -->
     <script>
-      window.username = "<%= assigns[:user_id] %>"
+      window.userId = "<%= assigns[:user_id] %>"
+      window.username = "<%= assigns[:username] %>"
       window.userToken = "<%= assigns[:user_token] %>"
+
+      window.gameId = "<%= assigns[:game_id] %>"
     </script>
     <script src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
