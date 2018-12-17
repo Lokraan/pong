@@ -1,5 +1,6 @@
 
 <div id="main">
   <h1 class="flex justify-center"> ping </h1>
-  <h1 class="flex justify-center"> In lobby for game </h1>
+  <h1 id="lobby-status" class="flex justify-center"> In lobby for game </h1>
+  <h1 id="lobby-members> class="flex justify-center"></h1>
 </div>

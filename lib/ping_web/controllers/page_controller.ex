@@ -15,10 +15,12 @@ defmodule PingWeb.PageController do
   end
 
   def game(conn, %{"game_id" => game_id}) do
+    IO.inspect Ping.Game.find_game(game_id)
     case Ping.Game.find_game(game_id) do
       {:ok, _} ->
         conn
         |> put_session(:game_id, game_id)
+        |> assign(:game_id, game_id)
         |> render("game.html")
       {:error, _} ->
         redirect(conn, to: "/find_game")

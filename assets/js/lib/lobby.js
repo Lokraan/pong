@@ -1,56 +1,39 @@
-const LobbySocket = {
+const Lobby = {
   init(socket) {
     this.socket = socket
 
-    this.lobbyStatus = document.getElementById("lobby-status")
     this.findLobby()
-
-    return this
   },
 
   findLobby() {
-    this.findLobbyChannel = this.socket.channel("lobby:find")
-    this.findLobbyChannel.join()
+    this.findLobby = this.socket.channel("lobby:find")
       .receive("ok", (lobby_id) => {
-        this.joinLobby(lobby_id)
-        this.findLobbyChannel.leave()
+        joinLobby(lobby_id)
+        this.findLobby.leave()
       })
   },
 
   joinLobby(lobby_id) {
     this.lobbyChannel = this.socket.channel(lobby_id)
-
-    const wow = this    
     this.lobbyChannel.join()
       .receive("ok", (resp) => {
-        console.log(`Lobby joined ${resp}`)
-        this.lobbyStatus.innerHTML = `In Lobby ${lobby_id}`
-
-        if(resp.game_id) {
-          const redir = `/game/${resp.game_id}`
-          window.location.replace(redir)
-        }
-
-        wow.bind()
+        console.log("Joined! ", resp)
+        this.bind()
       })
       .receive("error", (reason) => {
-        console.log(`Lobby ${reason}`)
-        
+        console.log(reason)
         if(reason == "full") {
-          wow.findLobby()
+          findLobby()
         }
       })
   },
 
   disconnect() {
-    console.log("disconnect")
     if(this.lobbyChannel)
-      this.lobbyChannel.push("lobby:leave", {})
-        .receive("ok", (resp) => console.log(resp, "disconnect2"))
+      this.lobbyChannel.leave()
 
-    if(this.findLobbyChannel.state != "closed")
-      this.findLobbyChannel.push("lobby:leave", {})
-        .receive("ok", (resp) => console.log(resp, "disconnect3"))
+    if(this.findLobby)
+      this.findLobby.leave()
   },
 
   bind() {
@@ -68,8 +51,9 @@ const LobbySocket = {
       this.forceStart.innerHTML = `${votes}/6`
     })
 
-    this.lobbyChannel.on("game:start", (data) => {
-      const redir = `/game/${data.game_id}`
+    this.lobbyChannel.on("game:start", (game_id) => {
+      const host = window.location.hostname
+      const redir = `${host}/game/${game_id}`
 
       window.location.replace(redir)
     })
@@ -81,4 +65,3 @@ const LobbySocket = {
   }
 }
 
-export default LobbySocket

@@ -22,17 +22,17 @@ defmodule PingWeb.LobbyChannel do
         lobby_id = gen_id()
 
         {:ok, pid} = DynamicSupervisor.start_child(LobbySupervisor, 
-          {Lobby, lobby_id: lobby_id}) 
+          {Lobby, lobby_id: lobby_id})
+
         lobby_id = Lobby.get_id(pid)
 
-        {:ok, Lobby.topic(lobby_id), socket}
+        {:ok, topic(lobby_id), socket}
 
       # lobbies do exist
-      [h | _] ->
-        {:undefined, pid, _, _} = h
+      [{:undefined, pid, _, _} | _] ->
         lobby_id = Lobby.get_id(pid)
 
-        {:ok, Lobby.topic(lobby_id), socket}
+        {:ok, topic(lobby_id), socket}
     end
   end
 
@@ -59,18 +59,21 @@ defmodule PingWeb.LobbyChannel do
       :ok ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        {:ok, :joined, socket}
+        resp = get_lobby_join_resp(lobby_id)
+        
+        {:ok, resp, socket}
 
-      :now_full ->
+      {:now_full, players} ->
         socket = assign(socket, :lobby_id, lobby_id)
 
         game_id = gen_id()
-        players = Lobby.get_players(lobby_id)
-        DynamicSupervisor.start_child(Ping.GameSupervisor, {
+        {:ok, pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
           Ping.Game, game_id: game_id, players: players
         })
 
-        PingWeb.Endpoint.broadcast!(Lobby.topic(lobby_id), "game:start",
+        IO.inspect pid, label: :mad_game
+
+        PingWeb.Endpoint.broadcast!(topic(lobby_id), "game:start",
           %{game_id: game_id})
 
         {:ok, %{game_id: game_id}, socket}
@@ -78,7 +81,9 @@ defmodule PingWeb.LobbyChannel do
       :already_joined ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        {:ok, :already_joined, socket}
+        resp = get_lobby_join_resp(lobby_id)
+
+        {:ok, resp, socket}
 
       :full ->
         {:error, :full}
@@ -98,9 +103,23 @@ defmodule PingWeb.LobbyChannel do
     {:reply, {:ok, %{}}, socket}
   end
 
+  defp get_lobby_join_resp(lobby_id) do
+    lobby_state = Lobby.get_state(lobby_id)
+    
+    %{
+      lobby_id: topic(lobby_id),
+      players: length(Map.keys(lobby_state.players)),
+      max_players: lobby_state.max_players
+    }
+  end
+
   defp gen_id() do
     :crypto.strong_rand_bytes(8)
     |> Base.url_encode64()
     |> binary_part(0, 8)
+  end
+
+  defp topic(lobby_id) do
+    "lobby:#{lobby_id}"
   end
 end

@@ -1,4 +1,4 @@
-import MainView from './main';
+import MainView from './main'
 
 import socket from "../socket"
 import GameSocket from "../lib/gameSocket"

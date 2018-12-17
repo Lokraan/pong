@@ -1,3 +1,7 @@
 <div class="flex justify-center">
   <canvas id="game" class="full-screen flex justify-center"></canvas>
 </div>
+
+<div class="flex justify-center">
+  <a id="exit-button" class="button" href="/">Exit</a>
+</div>

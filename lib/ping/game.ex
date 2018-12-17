@@ -15,6 +15,9 @@ defmodule Ping.Game do
   use GenServer
 
   alias Ping.{Player, Ball} 
+  alias PingWeb.GameChannel
+
+  @refresh_rate 60 
 
   @enforce_keys [:game_id, :players]
   
@@ -27,8 +30,11 @@ defmodule Ping.Game do
   )
 
   @doc """
-   The start_link modules, expects `opts` to be passed into
+  The start_link modules, expects `opts` to be passed into
   it and expects opts to contain `:game_id` and `:players`
+
+  TODO
+  Set all players x_pos, y_pos, and wall_pos on intialization.
 
   ## Examples
     
@@ -39,11 +45,6 @@ defmodule Ping.Game do
   def start_link(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
     player_data = Keyword.fetch!(opts, :players)
-
-    """
-      # TODO
-        Set all players x_pos, y_pos, and wall_pos on intialization.
-    """
 
     GenServer.start_link(__MODULE__, [game_id, player_data],
       name: {:via, Registry, {Ping.GameRegistry, game_id}}
@@ -60,22 +61,27 @@ defmodule Ping.Game do
   )
   """
   def init([game_id, players]) do
-    new_players = %{}
-    Enum.each(players, fn {k, v} ->
+    new_players = Enum.reduce(players, %{}, fn {id, name}, m ->
       player = %Player{
-        username: v.username,
-        user_id: v.user_id
+        username: name
       }
-      Map.put(players, k, player)
+      Map.put(m, id, player)
     end)
 
     state = %Game{
       game_id: game_id,
-      players: players,
-      max_players: Application.get_env(:ping, Ping, [])[:max_players] || 6
+      players: new_players,
+      max_players: config(:max_players) || 6,
+      balls: %{aaa: %Ball{}} 
     }
 
+    schedule_updates()
+
     {:ok, state}
+  end
+
+  def schedule_updates do
+    Process.send_after(self(), :update, update_rate())
   end
 
   @doc """
@@ -142,6 +148,10 @@ defmodule Ping.Game do
     |> GenServer.call({:handle_command, command, player_id})
   end
 
+  def handle_call(:id, _from, state) do
+    state.id
+  end
+
   @doc """
   Handle's `:player_leave` by removing the player's data.
   """
@@ -149,7 +159,27 @@ defmodule Ping.Game do
     new_players = Map.delete(state.players, p_id)
   
     state = %{state | players: new_players}
-    {:reply, state, state}
+
+    if length(Map.keys(state.players)) == 0 do
+      {:stop, :normal, :no_players, state}
+    else
+      {:reply, state, state}
+    end 
+  end
+
+  def handle_info(:update, state) do
+    schedule_updates()
+    
+    IO.puts "updates"
+    GameChannel.broadcast_game_update(
+      state.game_id,
+      %{
+        players: state.players,
+        balls: state.balls
+      }
+    )
+
+    {:noreply, state}
   end
 
   @doc """
@@ -207,5 +237,14 @@ defmodule Ping.Game do
     updated_player = command.(player)
 
     update_player_state(state, updated_player)
+  end
+
+  defp update_rate do
+    round(1_000 / @refresh_rate)  
+  end
+
+  @spec config(atom()) :: term
+  defp config(key) do
+    Application.get_env(:ping, Ping, [])[key]
   end
 end

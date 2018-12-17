@@ -47,10 +47,4 @@ defmodule PingWeb.UserSocket do
   #
   # Returning `nil` makes this socket anonymous.
   def id(socket), do: "user_socket:#{socket.assigns.user_id}"
-
-  defp gen_id do
-    :crypto.strong_rand_bytes(8)
-    |> Base.url_encode64()
-    |> binary_part(0, 8)
-  end
 end

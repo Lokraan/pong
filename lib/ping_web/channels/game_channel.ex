@@ -4,7 +4,7 @@ defmodule PingWeb.GameChannel do
   alias Ping.Game
 
   def broadcast_game_update(game_id, data) do
-    PingWeb.Endpoint.broadcast!("game:#{game_id}", "game:update", data)
+    PingWeb.Endpoint.broadcast!(topic(game_id), "game:update", data)
   end
 
   def join("game:" <> game_id, _params, socket) do
@@ -23,12 +23,17 @@ defmodule PingWeb.GameChannel do
   Handles a player's leave.
   """
   def handle_in("game:leave", _, socket) do
-    IO.inspect "handling leave"
     game_id = socket.assigns.game_id
     user_id = socket.assigns.user_id
 
-    Game.player_leave(game_id, user_id)
+    if Game.player_leave(game_id, user_id) == :no_players do
+      PingWeb.Endpoint.broadcast!(topic(game_id), "game:end", %{})
+    end
 
     {:reply, {:ok, %{}}, socket}
+  end
+
+  defp topic(game_id) do
+    "game:#{game_id}"
   end
 end

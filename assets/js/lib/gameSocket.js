@@ -1,3 +1,5 @@
+import Visual from "./gameVisual"
+
 const Game = {
   init(socket, game_id) {
     this.commands = {
@@ -16,6 +18,7 @@ const Game = {
         console.log(`Game ${resp}`)
       })
 
+    this.gameVisual = Visual.init("game")
     this.bind()
 
     return this
@@ -23,7 +26,7 @@ const Game = {
 
   bind() {
     this.gameChannel.on("game:update", (data) =>  {
-      updateCanvas(data)
+      this.gameVisual.update(data)
     })
 
     this.gameChannel.on("game:end", () => {

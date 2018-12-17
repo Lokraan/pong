@@ -1,12 +1,10 @@
 defmodule Ping.Player do
   alias __MODULE__
 
-  # x_pos and y_pos are overwritten when sent to clients for update
-  @enforce_keys [:user_id, :username]
-
-  alias __MODULE__
+  @derive Jason.Encoder
+  
+  @enforce_keys [:username]
   defstruct(
-    user_id: :string,
     username: :string,
     x_pos: 0,
     y_pos: 0,
@@ -17,18 +15,18 @@ defmodule Ping.Player do
 
   # method to move/rotate_left/right then method to get camera pos
   def move_right(player) do
-    :noop
+    player
   end
 
   def move_left(player) do
-    :noop
+    player
   end
 
   def rotate_right(player) do
-    :noop
+    player
   end
   
   def rotate_left(player) do
-    :noop
+    player
   end
 end

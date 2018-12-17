@@ -20,7 +20,7 @@ defmodule Ping.Lobby do
   def init([lobby_id]) do
     state = %Lobby{
       id: lobby_id,
-      max_players: Application.get_env(:ping, Ping, [])[:max_players] || 6
+      max_players: config(:max_players) || 6
     }
 
     {:ok, state}
@@ -34,8 +34,6 @@ defmodule Ping.Lobby do
         raise ArgumentError, "Lobby not found for id #{lobby_id}"
     end
   end
-
-  def topic(lobby_id), do: "lobby:#{lobby_id}"
 
   def get_id(pid), do: GenServer.call(pid, :get_id)
 
@@ -57,9 +55,17 @@ defmodule Ping.Lobby do
     |> GenServer.call(:get_players)
   end
 
+  def get_state(lobby_id) do
+    lobby_id
+    |> find_lobby!()
+    |> GenServer.call(:get_state)
+  end
+
   def handle_call(:get_players, _from, state), do: {:reply, state.players, state}
 
   def handle_call(:get_id, _from, state), do: {:reply, state.id, state}
+
+  def handle_call(:get_state, _from, state), do: {:reply, state, state}
 
   def handle_call({:update_id, new_id}, _from, state) do
     new_state = %{state | id: new_id}
@@ -70,13 +76,18 @@ defmodule Ping.Lobby do
     IO.inspect state.players, label: :players
     IO.inspect player, label: :player
     players = length(Map.keys(state.players))
+
     if not Map.has_key?(state.players, player.user_id) do
       if players < state.max_players do
 
-        new_players = Map.put(state.players, player.user_id, player)
+        new_players = Map.put(state.players, player.user_id, player.username)
 
-        response = ((players + 1) == state.max_players) && :now_full || :ok
-        {:reply, response, %{state | players: new_players}}
+        state = %{state | players: new_players}
+        if ((players + 1) == state.max_players) do
+          {:stop, :lobby_closing, {:now_full, state.players}, state}
+        else
+          {:ok, :ok, state}
+        end
       else
         {:reply, :full, state}
       end
@@ -87,6 +98,7 @@ defmodule Ping.Lobby do
 
   def handle_call({:player_leave, player_id}, _from, state) do
     new_players = Map.delete(state.players, player_id)
+    
     {:reply, :ok, %{state | players: new_players}}
   end
 
