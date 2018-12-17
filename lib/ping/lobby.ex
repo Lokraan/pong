@@ -73,26 +73,23 @@ defmodule Ping.Lobby do
   end
 
   def handle_call({:player_join, player}, _from, state) do
-    IO.inspect state.players, label: :players
-    IO.inspect player, label: :player
     players = length(Map.keys(state.players))
 
-    if not Map.has_key?(state.players, player.user_id) do
-      if players < state.max_players do
+    with {:ok, :not_joined} <- player_joined?(player, state.players),
+      {:ok, :not_full} <- is_full?(state) do
 
-        new_players = Map.put(state.players, player.user_id, player.username)
+      new_players = Map.put(state.players, player.user_id, player.username)
 
-        state = %{state | players: new_players}
-        if ((players + 1) == state.max_players) do
-          {:stop, :lobby_closing, {:now_full, state.players}, state}
-        else
-          {:ok, :ok, state}
-        end
+      state = %{state | players: new_players}
+      
+      if ((players + 1) == state.max_players) do
+        {:stop, :lobby_closing, {:now_full, state.players}, state}
       else
-        {:reply, :full, state}
+        {:reply, :ok, state}
       end
     else
-      {:reply, :already_joined, state}
+      {:ok, reason} ->
+        {:reply, reason, state}
     end
   end
 
@@ -106,4 +103,20 @@ defmodule Ping.Lobby do
   defp config(key) do
     Application.get_env(:ping, Ping, [])[key]
   end
+
+  defp is_full?(state) do
+    if length(Map.keys(state.players)) >= state.max_players do
+      {:ok, :full}
+    else
+      {:ok, :not_full}
+    end
+  end
+
+  defp player_joined?(player, players) do
+    if Map.has_key?(players, player.user_id) do
+      {:ok, :already_joined}
+    else
+      {:ok, :not_joined}
+    end
+  end 
 end

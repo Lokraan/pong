@@ -71,8 +71,6 @@ defmodule PingWeb.LobbyChannel do
           Ping.Game, game_id: game_id, players: players
         })
 
-        IO.inspect pid, label: :mad_game
-
         PingWeb.Endpoint.broadcast!(topic(lobby_id), "game:start",
           %{game_id: game_id})
 
@@ -119,7 +117,7 @@ defmodule PingWeb.LobbyChannel do
     |> binary_part(0, 8)
   end
 
-  defp topic(lobby_id) do
+  def topic(lobby_id) do
     "lobby:#{lobby_id}"
   end
 end

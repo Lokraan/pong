@@ -8,7 +8,7 @@ defmodule PingWeb.PageControllerTest do
     assert html_response(conn, 200) != ""
   end
 
-  test "GET /find_game", %{conn: conn} do
+  test "GET /find_game" do
     @endpoint.subscribe("/socket")
     
     PingWeb.Endpoint.broadcast!("/socket", "lobby:find", %{})
