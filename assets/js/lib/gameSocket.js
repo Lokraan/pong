@@ -18,7 +18,7 @@ const Game = {
         console.log(`Game ${resp}`)
       })
 
-    this.gameVisual = Visual.init("game")
+    this.gameVisual = new Visual("game") 
     this.bind()
 
     return this

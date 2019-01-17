@@ -24,6 +24,10 @@ config :phoenix, :json_library, Jason
 
 config :ping, Ping, max_players: 1
 
+config :ping, Ping.Game,
+  size: 600,
+  wall_length: 300
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

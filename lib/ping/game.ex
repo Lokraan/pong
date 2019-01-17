@@ -11,21 +11,22 @@ defmodule Ping.Game do
     balls: %{}
   )`
   """
-
   use GenServer
 
-  alias Ping.{Player, Ball} 
+  alias Ping.Game.{Player, Ball, Wall} 
   alias PingWeb.GameChannel
 
-  @refresh_rate 60 
+  @refresh_rate 1
+  @wall_size 250
 
-  @enforce_keys [:game_id, :players]
+  @enforce_keys [:game_id, :players, :walls]
   
   alias __MODULE__
   defstruct(
     game_id: :string,
     players: %{},
     balls: %{},
+    walls: [],
     max_players: 6
   )
 
@@ -61,23 +62,86 @@ defmodule Ping.Game do
   )
   """
   def init([game_id, players]) do
-    new_players = Enum.reduce(players, %{}, fn {id, name}, m ->
-      player = %Player{
-        username: name
-      }
-      Map.put(m, id, player)
-    end)
-
     state = %Game{
       game_id: game_id,
-      players: new_players,
+      players: gen_game_players(players),
       max_players: config(:max_players) || 6,
-      balls: %{aaa: %Ball{}} 
+      balls: %{aaa: %Ball{}},
+      walls: gen_game_walls()
     }
 
     schedule_updates()
 
     {:ok, state}
+  end
+
+  defp wall_vectors do
+    %{
+      0 => {1, 1},
+      1 => {-1, 0},
+      2 => {1, -1},
+      3 => {1, 1},
+      4 => {1, 0},
+      5 => {0, 1}
+    }
+  end
+
+  defp gen_game_walls do
+    Enum.map(0..5, fn(i) ->
+      {vx, vy} = Map.get(wall_vectors(), i)
+
+      {x0, y0, x1, y1} = get_wall_pos(i)
+
+      Wall.new_wall(x0, y0, x1, y1, vx, vy)
+    end)
+  end
+
+  defp get_wall_pos(i) do
+    x0 = round wall_size + wall_size * :math.cos((i - 1) * 2 * :math.pi / 6) 
+    y0 = round wall_size + wall_size * :math.sin((i - 1) * 2 * :math.pi / 6)
+    x1 = round wall_size + wall_size * :math.cos(i * 2 * :math.pi / 6)
+    y1 = round wall_size + wall_size * :math.sin(i * 2 * :math.pi / 6)
+
+    {x0, y0, x1, y1}
+  end
+
+  defp wall_size do
+    @wall_size
+  end
+
+  defp gen_game_players(players) do
+    m = %{}
+    Enum.with_index(players)
+    |> Enum.reduce(%{}, fn {{id, name}, index}, m ->
+      {x0, y0, x1, y1} = get_wall_pos(index)
+      {vx, vy} = Map.get(wall_vectors, index)
+
+      ang = 
+        cond do
+          vx == 0 and vy > 0 ->
+            90.0
+
+          vx == 0 and vy < 0 ->
+            270.0
+
+          true ->  
+            :math.atan(vy / vx)
+        end
+
+      x = (x0 + x1) / 2 + 100 * :math.cos(ang)
+      y = (y0 + y1) / 2 + 100 * :math.sin(ang)
+
+      x_offset = (Player.width / 2) * :math.cos(ang)
+      y_offset = (Player.height / 2) * :math.sin(ang) 
+
+      x0 = round x - x_offset
+      y0 = round y - y_offset
+      x1 = round x + x_offset
+      y1 = round y + y_offset
+
+      player = Player.new_player(x0, y0, x1, y1, name, index)
+      Map.put(m, id, player)
+    end)
   end
 
   def schedule_updates do
@@ -175,7 +239,8 @@ defmodule Ping.Game do
       state.game_id,
       %{
         players: state.players,
-        balls: state.balls
+        balls: state.balls,
+        walls: state.walls
       }
     )
 
@@ -210,19 +275,21 @@ defmodule Ping.Game do
   def handle_call({:handle_command, command, player_id}, _from, state) do
     player = Map.get(state.players, player_id)
 
-    case command do
+    cmd = case command do
       :left -> 
-        update_player_state(&Player.move_left/1, state, player)
+        &Player.move_left/1
 
       :right ->
-        update_player_state(&Player.move_right/1, state, player)
+        &Player.move_right/1
 
       :rotate_left -> 
-        update_player_state(&Player.rotate_left/1, state, player)
+        &Player.rotate_left/1
 
       :rotate_right -> 
-        update_player_state(&Player.rotate_right/1, state, player)
+        &Player.rotate_right/1
     end
+
+    update_player_state(cmd, state, player)
   end
 
   defp update_player_state(state, player) do

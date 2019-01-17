@@ -10,65 +10,67 @@
  *
  */
 
-const Visual = {
-  init(canvas_id) {
+class Visual {
+  constructor(canvas_id) {
     this.canvas = document.getElementById(canvas_id)
+    this.canvas.width = 800
+    this.canvas.height = 800
 
     return this
-  },
+  }
+
+  drawWall(ctx, wall) {
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 5
+
+    ctx.beginPath()
+    ctx.moveTo(wall.x0, wall.y0)
+    ctx.lineTo(wall.x1, wall.y1)
+    ctx.stroke() 
+  }
+
+  drawWalls(ctx, walls) {
+    for(var i in walls) {      
+      this.drawWall(ctx, walls[i])
+    }
+  }
+
+  drawBall(ctx, ball) {
+    ctx.beginPath()
+    ctx.fillStyle = 'yellow'
+    ctx.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI)
+    ctx.fill()
+  }
+
+  drawBalls(ctx, balls) {
+    for(var i in balls)
+      this.drawBall(ctx, balls[i])
+  }
+
+  drawPlayer(ctx, player) {
+    ctx.strokeStyle = "yellow"
+    ctx.lineWidth = 5
+
+    ctx.beginPath()
+    ctx.moveTo(player.x0, player.y0)
+    ctx.lineTo(player.x1, player.y1)
+    ctx.stroke() 
+  }
+
+  drawPlayers(ctx, players) {
+    for(var i in players) {
+      this.drawPlayer(ctx, players[i])
+    }
+  }
 
   update(data) {
-    const xtx = this.canvas.getContext("2d");
+    const ctx = this.canvas.getContext("2d")
 
-    console.log(data);
+    console.log(data, data.walls)
 
-    // const x = data.x;
-    // const y = data.y;
-    // ctx.fillStyle = data.color;
-
-    // if(type == "player") {
-    //   const width = data.width;
-    //   const height = data.height;
-
-    //   ctx.translate(x + width/2, y + height/2);
-    //   ctx.rotate(data.angle * Math.PI / 180);
-    //   ctx.fillRect(-width/2, -height/2, width, height);
-    // } else if(type == "ball") {
-    //   ctx.beginPath();
-    //   ctx.arc(x, y, data.size, 0, 2 * Math.PI);
-    //   ctx.fill();
-    // }
-  },
-
-  drawBalls(balls) {
-    
-  },
-
-  drawPlayers() {
-
-  }
-}
-
-function updateCanvas(data) {
-  const ctx = canvas.getContext("2d");
-  
-  const type = data.type;
-
-  const x = data.x;
-  const y = data.y;
-  ctx.fillStyle = data.color;
-
-  if(type == "player") {
-    const width = data.width;
-    const height = data.height;
-
-    ctx.translate(x + width/2, y + height/2);
-    ctx.rotate(data.angle * Math.PI / 180);
-    ctx.fillRect(-width/2, -height/2, width, height);
-  } else if(type == "ball") {
-    ctx.beginPath();
-    ctx.arc(x, y, data.size, 0, 2 * Math.PI);
-    ctx.fill();
+    this.drawWalls(ctx, data.walls)
+    this.drawBalls(ctx, data.balls)
+    this.drawPlayers(ctx, data.players)
   }
 }
 

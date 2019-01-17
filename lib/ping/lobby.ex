@@ -1,5 +1,4 @@
 defmodule Ping.Lobby do
-
   use GenServer
 
   alias __MODULE__
