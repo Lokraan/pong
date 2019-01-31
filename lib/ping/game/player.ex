@@ -1,6 +1,6 @@
 defmodule Ping.Game.Player do
   alias __MODULE__
-  alias Ping.Game.Vector
+  alias Ping.Game.{Vector, Setup}
 
   @derive Jason.Encoder
   
