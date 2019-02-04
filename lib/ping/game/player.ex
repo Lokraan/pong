@@ -29,8 +29,16 @@ defmodule Ping.Game.Player do
     }
   end
 
+  def pos_change_amt do
+    2.5
+  end
+
   # method to move/rotate_left/right then method to get camera pos
   def move_right(player) do
+    %Vector{x: vx, y: vy} = Setup.get_wall_vector(player.wall_index)
+    x_change = pos_change_amt * vx 
+    y_change = pos_change_amt * vy
+
     player
   end
 

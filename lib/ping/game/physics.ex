@@ -34,7 +34,7 @@ defmodule Ping.Game.Physics do
   def wall_ball_collision(%Ball{} = b, w) do
     case wall_ball_collision?(b, w) do
       {_, _, true} ->
-        v = Vector.reflect(b.vector, w.vector)
+        v = Vector.reflect(b.vector, w.reflection_vector)
         b = Map.replace!(b, :vector, v)
 
         {b, w}

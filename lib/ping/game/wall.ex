@@ -8,7 +8,7 @@ defmodule Ping.Game.Wall do
     y0: 0,
     x1: 0,
     y1: 0,
-    vector: %Vector{}
+    reflection_vector: %Vector{}
   )
 
   def new_wall(x0, y0, x1, y1, vx, vy) do
@@ -17,7 +17,7 @@ defmodule Ping.Game.Wall do
       y0: y0,
       x1: x1,
       y1: y1,
-      vector: %Vector{
+      reflection_vector: %Vector{
         x: vx,
         y: vy
       }
