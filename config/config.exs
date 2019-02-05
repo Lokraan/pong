@@ -25,8 +25,8 @@ config :phoenix, :json_library, Jason
 config :ping, Ping, max_players: 1
 
 config :ping, Ping.Game,
-  wall_size: 250,
-  walls: 4
+  wall_size: 200,
+  walls: 6
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

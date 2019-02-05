@@ -35,15 +35,11 @@ defmodule Ping.Game.Setup do
     mid_x = round (x0 + x1) / 2
     mid_y = round (y0 + y1) / 2
 
-    x_change = mid_x - center_x
-    y_change = mid_y - center_y
+    x_change = center_x - mid_x
+    y_change = center_y - mid_y
+    IO.inspect {x_change, y_change}, label: :get_wall_centripetal_vector
 
-    IO.inspect {x_change, y_change}, label: :wall_center_change
-    ang = :math.atan(y_change / x_change)
-    vx = :math.cos(ang)
-    vy = :math.sin(ang)
-
-    {vx, vy}
+    normalize_vals(x_change, y_change)
   end
 
   defp get_wall_positions(i) do
@@ -55,16 +51,20 @@ defmodule Ping.Game.Setup do
     {x0, y0, x1, y1}
   end
 
+  defp normalize_vals(a, b) do
+    max_val = max(abs(a), abs(b))
+    
+    a_normalized = a / max_val
+    b_normalized = b / max_val
+
+    {a_normalized, b_normalized}
+  end
+
   def get_wall_edge_vector(x0, y0, x1, y1) do
     x_change = x0 - x1
     y_change = y0 - y1
-    IO.inspect {x_change, y_change}
 
-    ang = :math.atan(y_change / x_change)
-    vx = :math.cos(ang)
-    vy = :math.sin(ang)
-
-    {vx, vy}
+    normalize_vals(x_change, y_change)
   end
 
   def get_wall_edge_vector(index) do
@@ -89,13 +89,13 @@ defmodule Ping.Game.Setup do
       IO.inspect {x0, y0, x1, y1} 
 
       {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
-      IO.inspect {vx, vy}
+      IO.inspect {vx, vy}, label: :get_wall_centripetal_vector2
 
-      mid_x = round (x0 + x1) / 2 + (100 * vx)
-      mid_y = round (y0 + y1) / 2 + (100 * vy)
+      mid_x = round (x0 + x1) / 2 + (25 * vx)
+      mid_y = round (y0 + y1) / 2 + (25 * vy)
 
       {edge_vx, edge_vy} = get_wall_edge_vector(x0, y0, x1, y1)
-      IO.inspect {edge_vx, edge_vy}
+      IO.inspect {edge_vx, edge_vy}, label: :wall_edge_vector
 
       x_offset = (Player.width / 2) * edge_vx
       y_offset = (Player.height / 2) * edge_vy
@@ -106,7 +106,6 @@ defmodule Ping.Game.Setup do
       y1 = round mid_y + y_offset
 
       player = Player.new_player(x0, y0, x1, y1, name, index)
-      IO.inspect player
       Map.put(m, id, player)
     end)
   end

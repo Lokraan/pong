@@ -16,7 +16,7 @@ defmodule Ping.Game.Player do
   )
 
   @width 25
-  @height 5
+  @height 25
 
   def new_player(x0, y0, x1, y1, username, wall_index) do
     %Player{

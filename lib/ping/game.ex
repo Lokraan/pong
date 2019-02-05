@@ -206,7 +206,7 @@ defmodule Ping.Game do
     player = Map.get(state.players, player_id)
 
     cmd = cond do
-      type == "press" ->
+      type == :press ->
         case command do
           :left -> 
             &Player.move_left/1
@@ -220,7 +220,7 @@ defmodule Ping.Game do
           :rotate_right -> 
             &Player.rotate_right/1
         end
-      type == "release" ->
+      type == :release ->
         &Player.stop/1
     end
 

@@ -40,6 +40,8 @@ const Game = {
           type: "press"
         }
 
+        console.log(command);
+
         this.gameChannel.push("game:command", command)
           .receive("ok", (reasons) =>  console.log(reasons))
           .receive("error", (reasons) =>  console.log(reasons))
@@ -53,6 +55,8 @@ const Game = {
           type: "release"
         }
 
+        console.log(command);
+        
         this.gameChannel.push("game:command", command)
           .receive("ok", (reasons) =>  console.log(reasons))
           .receive("error", (reasons) =>  console.log(reasons))
