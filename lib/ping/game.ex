@@ -13,7 +13,7 @@ defmodule Ping.Game do
   """
   use GenServer
 
-  alias Ping.Game.{Player, Ball, Wall, Setup} 
+  alias Ping.Game.{Player, Ball, Setup} 
   alias PingWeb.GameChannel
 
   @refresh_rate 1
@@ -136,10 +136,26 @@ defmodule Ping.Game do
   @doc """
   Calls genserver `:handle_command` and passes in player_id.
   """
-  def handle_command(game_id, command, player_id) do
+  def handle_command(game_id, command, type, player_id) do
     game_id
     |> find_game!()
-    |> GenServer.call({:handle_command, command, player_id})
+    |> GenServer.call({:handle_command, command, type, player_id})
+  end
+
+  def handle_info(:update, state) do
+    schedule_updates()
+    
+    IO.puts "updates"
+    GameChannel.broadcast_game_update(
+      state.game_id,
+      %{
+        players: state.players,
+        balls: state.balls,
+        walls: state.walls
+      }
+    )
+
+    {:noreply, state}
   end
 
   def handle_call(:id, _from, state) do
@@ -161,24 +177,8 @@ defmodule Ping.Game do
     end 
   end
 
-  def handle_info(:update, state) do
-    schedule_updates()
-    
-    IO.puts "updates"
-    GameChannel.broadcast_game_update(
-      state.game_id,
-      %{
-        players: state.players,
-        balls: state.balls,
-        walls: state.walls
-      }
-    )
-
-    {:noreply, state}
-  end
-
   @doc """
-  Returns whether or not 
+  Returns whether or not the player is in the game. 
   """
   def handle_call({:has_player, player_id}, _from, state) do
     {:reply, Map.has_key?(state.players, player_id), state}
@@ -246,7 +246,7 @@ defmodule Ping.Game do
   end
 
   defp update_rate do
-    round(1_000 / refresh_rate)  
+    round(1_000 / refresh_rate()) 
   end
 
   @spec config(atom()) :: term

@@ -17,10 +17,10 @@ defmodule PingWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   def connect(%{"token" => token, 
-      "username" => username, 
+      "username" => _, 
       "user_id" => user_id, 
       "game_id" => game_id
-      }, socket, connect_info) do
+      }, socket, _) do
     case Phoenix.Token.verify(socket, "user token", token, max_age: 86400) do
       {:ok, username} ->
         socket = 

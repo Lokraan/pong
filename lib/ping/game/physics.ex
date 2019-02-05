@@ -1,5 +1,5 @@
 defmodule Ping.Game.Physics do
-  alias Ping.Game.{Ball, Wall, Vector}
+  alias Ping.Game.{Ball, Vector}
 
   def wall_ball_collision?(%Ball{} = b, w) do
     # calc delta distance: source point to line start

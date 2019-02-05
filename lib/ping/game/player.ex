@@ -35,11 +35,11 @@ defmodule Ping.Game.Player do
 
   defp update_player_vector(player, vx, vy) do
     new_v = %Vector{
-      x: 0,
-      y: 0
+      x: vx,
+      y: vy
     }
 
-    Map.replace(player, :vector, new_v)
+    Map.replace!(player, :vector, new_v)
   end
 
   def stop(player) do

@@ -8,15 +8,11 @@ defmodule PingWeb.GameChannel do
   end
 
   def join("game:" <> game_id, _params, socket) do
-    if Game.has_player?(game_id, socket.assigns.user_id) do
-      {:ok, :joined, socket}
-    else
-      {:error, :not_authorized}
-    end
+    {:ok, :joined, socket}
   end
 
   def handle_in("game:command", %{"command" => command, "type" => type}, socket) do
-    Game.handle_command(command, type, socket.assigns.game_id, socket.assigns.user_id)
+    Game.handle_command(socket.assigns.game_id, command, type, socket.assigns.user_id)
   end
 
     @doc """

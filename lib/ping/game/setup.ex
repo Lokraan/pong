@@ -7,19 +7,7 @@ defmodule Ping.Game.Setup do
   staring at my code wondering why it was so bad.
   (I still am but to a lesser degree).
   """
-
-  alias Ping.Game.{Wall, Vector}
-
-  def wall_centripetal_vectors do
-    %{
-      0 => {1, 1},
-      1 => {-1, 0},
-      2 => {1, -1},
-      3 => {1, 1},
-      4 => {1, 0},
-      5 => {0, 1}
-    }
-  end
+  alias Ping.Game.{Player, Wall, Ball}
 
   defp wall_size do
     config(:wall_size)
@@ -29,72 +17,102 @@ defmodule Ping.Game.Setup do
     config(:walls)
   end
 
+  defp get_field_center do
+    x0 = round wall_size() + wall_size() * :math.cos(-1 * 2 * :math.pi / walls()) 
+    y0 = round wall_size() + wall_size() * :math.sin(-1 * 2 * :math.pi / walls())
+    x1 = round wall_size() + wall_size() * :math.cos((-1 + (walls() / 2)) * 2 * :math.pi / walls())
+    y1 = round wall_size() + wall_size() * :math.sin((-1 + (walls() / 2)) * 2 * :math.pi / walls())
+
+    mid_x = round (x0 + x1) / 2
+    mid_y = round (y0 + y1) / 2
+
+    {mid_x, mid_y}
+  end
+
+  defp get_wall_centripetal_vector(x0, y0, x1, y1) do
+    {center_x, center_y} = get_field_center()
+
+    mid_x = round (x0 + x1) / 2
+    mid_y = round (y0 + y1) / 2
+
+    x_change = mid_x - center_x
+    y_change = mid_y - center_y
+
+    IO.inspect {x_change, y_change}, label: :wall_center_change
+    ang = :math.atan(y_change / x_change)
+    vx = :math.cos(ang)
+    vy = :math.sin(ang)
+
+    {vx, vy}
+  end
+
   defp get_wall_positions(i) do
-    x0 = round wall_size + wall_size * :math.cos((i - 1) * 2 * :math.pi / walls) 
-    y0 = round wall_size + wall_size * :math.sin((i - 1) * 2 * :math.pi / walls)
-    x1 = round wall_size + wall_size * :math.cos(i * 2 * :math.pi / walls)
-    y1 = round wall_size + wall_size * :math.sin(i * 2 * :math.pi / walls)
+    x0 = round wall_size() + wall_size() * :math.cos((i - 1) * 2 * :math.pi / walls()) 
+    y0 = round wall_size() + wall_size() * :math.sin((i - 1) * 2 * :math.pi / walls())
+    x1 = round wall_size() + wall_size() * :math.cos(i * 2 * :math.pi / walls())
+    y1 = round wall_size() + wall_size() * :math.sin(i * 2 * :math.pi / walls())
 
     {x0, y0, x1, y1}
   end
 
-  def get_wall_edge_vector(i) do
-    vx = :math.cos(i * 2 * :math.pi / walls)
-    vy = :math.sin(i * 2 * :math.pi / walls)
+  def get_wall_edge_vector(x0, y0, x1, y1) do
+    x_change = x0 - x1
+    y_change = y0 - y1
+    IO.inspect {x_change, y_change}
 
-    %Vector{
-      x: vx,
-      y: vy
-    }
+    ang = :math.atan(y_change / x_change)
+    vx = :math.cos(ang)
+    vy = :math.sin(ang)
+
+    {vx, vy}
+  end
+
+  def get_wall_edge_vector(index) do
+    {x0, y0, x1, y1} = get_wall_positions(index)
+
+    get_wall_edge_vector(x0, y0, x1, y1)
   end
 
   def gen_game_walls do
     Enum.map(0..5, fn(i) ->
-      {vx, vy} = Map.get(wall_centriptal_vectors, i)
-
-      {x0, y0, x1, y1} = get_wall_pos(i)
+      {x0, y0, x1, y1} = get_wall_positions(i)
+      {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
 
       Wall.new_wall(x0, y0, x1, y1, vx, vy)
     end)
   end
 
   def gen_game_players(players) do
-    m = %{}
     Enum.with_index(players)
-    |> Enum.reduce(%{}, fn {{id, name}, index}, m ->
-      {x0, y0, x1, y1} = get_wall_pos(index)
-      {vx, vy} = Map.get(wall_centripetal_vectors, index)
+    |> Enum.reduce(%{}, fn {{id, name}, index}, %{} = m ->
+      {x0, y0, x1, y1} = get_wall_positions(index)
+      IO.inspect {x0, y0, x1, y1} 
 
-      ang = 
-        cond do
-          vx == 0 and vy > 0 ->
-            1.5707963267948966
+      {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
+      IO.inspect {vx, vy}
 
-          vx == 0 and vy < 0 ->
-            -1.5707963267948966
+      mid_x = round (x0 + x1) / 2 + (100 * vx)
+      mid_y = round (y0 + y1) / 2 + (100 * vy)
 
-          true ->  
-            :math.atan(vy / vx)
-        end
+      {edge_vx, edge_vy} = get_wall_edge_vector(x0, y0, x1, y1)
+      IO.inspect {edge_vx, edge_vy}
 
-      x = (x0 + x1) / 2 + 100 * :math.cos(ang)
-      y = (y0 + y1) / 2 + 100 * :math.sin(ang)
+      x_offset = (Player.width / 2) * edge_vx
+      y_offset = (Player.height / 2) * edge_vy
 
-      x_offset = (Player.width / 2) * :math.cos(ang)
-      y_offset = (Player.height / 2) * :math.sin(ang) 
-
-      x0 = round x - x_offset
-      y0 = round y - y_offset
-      x1 = round x + x_offset
-      y1 = round y + y_offset
+      x0 = round mid_x - x_offset
+      y0 = round mid_y - y_offset
+      x1 = round mid_x + x_offset
+      y1 = round mid_y + y_offset
 
       player = Player.new_player(x0, y0, x1, y1, name, index)
+      IO.inspect player
       Map.put(m, id, player)
     end)
   end
 
   @spec config(atom()) :: term
   defp config(key) do
-    Application.get_env(:ping, Ping, [])[key]
+    Application.get_env(:ping, Ping.Game, [])[key]
   end
 end
