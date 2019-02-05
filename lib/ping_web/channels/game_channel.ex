@@ -15,8 +15,8 @@ defmodule PingWeb.GameChannel do
     end
   end
 
-  def handle_in("game:command", %{"command" => command}, socket) do
-    Game.handle_command(command, socket.assigns.game_id, socket.assigns.user_id)
+  def handle_in("game:command", %{"command" => command, "type" => type}, socket) do
+    Game.handle_command(command, type, socket.assigns.game_id, socket.assigns.user_id)
   end
 
     @doc """

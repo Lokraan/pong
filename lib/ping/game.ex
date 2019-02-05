@@ -202,21 +202,26 @@ defmodule Ping.Game do
   Handles a user command by updating the user state and in the game state.
   Supports `left`, `right`, `rotate_left`, `rotate_right`.
   """
-  def handle_call({:handle_command, command, player_id}, _from, state) do
+  def handle_call({:handle_command, command, type, player_id}, _from, state) do
     player = Map.get(state.players, player_id)
 
-    cmd = case command do
-      :left -> 
-        &Player.move_left/1
+    cmd = cond do
+      type == "press" ->
+        case command do
+          :left -> 
+            &Player.move_left/1
 
-      :right ->
-        &Player.move_right/1
+          :right ->
+            &Player.move_right/1
 
-      :rotate_left -> 
-        &Player.rotate_left/1
+          :rotate_left -> 
+            &Player.rotate_left/1
 
-      :rotate_right -> 
-        &Player.rotate_right/1
+          :rotate_right -> 
+            &Player.rotate_right/1
+        end
+      type == "release" ->
+        &Player.stop/1
     end
 
     update_player_state(cmd, state, player)

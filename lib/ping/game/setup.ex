@@ -1,7 +1,16 @@
 defmodule Ping.Game.Setup do
+  @moduledoc """
+  Big thanks to Darkash for providing the naming
+  used to describe the vectors!
+
+  Actually so good without it I would be stuck
+  staring at my code wondering why it was so bad.
+  (I still am but to a lesser degree).
+  """
+
   alias Ping.Game.{Wall, Vector}
 
-  def wall_vectors do
+  def wall_centripetal_vectors do
     %{
       0 => {1, 1},
       1 => {-1, 0},
@@ -20,7 +29,7 @@ defmodule Ping.Game.Setup do
     config(:walls)
   end
 
-  defp get_wall_pos(i) do
+  defp get_wall_positions(i) do
     x0 = round wall_size + wall_size * :math.cos((i - 1) * 2 * :math.pi / walls) 
     y0 = round wall_size + wall_size * :math.sin((i - 1) * 2 * :math.pi / walls)
     x1 = round wall_size + wall_size * :math.cos(i * 2 * :math.pi / walls)
@@ -29,7 +38,7 @@ defmodule Ping.Game.Setup do
     {x0, y0, x1, y1}
   end
 
-  def get_wall_vector(i) do
+  def get_wall_edge_vector(i) do
     vx = :math.cos(i * 2 * :math.pi / walls)
     vy = :math.sin(i * 2 * :math.pi / walls)
 
@@ -41,7 +50,7 @@ defmodule Ping.Game.Setup do
 
   def gen_game_walls do
     Enum.map(0..5, fn(i) ->
-      {vx, vy} = Map.get(wall_vectors(), i)
+      {vx, vy} = Map.get(wall_centriptal_vectors, i)
 
       {x0, y0, x1, y1} = get_wall_pos(i)
 
@@ -54,7 +63,7 @@ defmodule Ping.Game.Setup do
     Enum.with_index(players)
     |> Enum.reduce(%{}, fn {{id, name}, index}, m ->
       {x0, y0, x1, y1} = get_wall_pos(index)
-      {vx, vy} = Map.get(wall_vectors, index)
+      {vx, vy} = Map.get(wall_centripetal_vectors, index)
 
       ang = 
         cond do

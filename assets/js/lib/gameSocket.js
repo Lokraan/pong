@@ -35,7 +35,25 @@ const Game = {
 
     window.addEventListener("keypress", (e) => {
       if(e.keyCode in this.commands) {
-        this.gameChannel.push("game:command", {command: this.commands[e.keyCode]})
+        const command = {
+          command: this.commands[e.keyCode],
+          type: "press"
+        }
+
+        this.gameChannel.push("game:command", command)
+          .receive("ok", (reasons) =>  console.log(reasons))
+          .receive("error", (reasons) =>  console.log(reasons))
+      }
+    })
+
+    window.addEventListener("keyup", (e) => {
+      if(e.keyCode in this.commands) {
+        const command = {
+          command: this.commands[e.keyCode],
+          type: "release"
+        }
+
+        this.gameChannel.push("game:command", command)
           .receive("ok", (reasons) =>  console.log(reasons))
           .receive("error", (reasons) =>  console.log(reasons))
       }
