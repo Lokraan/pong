@@ -67,6 +67,7 @@ class Visual {
     const ctx = this.canvas.getContext("2d")
 
     console.log(data, data.walls)
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.drawWalls(ctx, data.walls)
     this.drawBalls(ctx, data.balls)

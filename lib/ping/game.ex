@@ -13,13 +13,14 @@ defmodule Ping.Game do
   """
   use GenServer
 
-  alias Ping.Game.{Player, Ball, Setup} 
+  alias Ping.Game.{Setup, Engine}
   alias PingWeb.GameChannel
 
-  @refresh_rate 1
+  @refresh_rate 60
+  @start_delay 3_000
 
   @enforce_keys [:game_id, :players, :walls]
-  
+
   alias __MODULE__
   defstruct(
     game_id: :string,
@@ -37,7 +38,7 @@ defmodule Ping.Game do
   Set all players x_pos, y_pos, and wall_pos on intialization.
 
   ## Examples
-    
+
   DynamicSupervisor.start_child(Ping.GameSupervisor, {
     Ping.Game, game_id: "3jda9", players: %{}
   })
@@ -65,16 +66,24 @@ defmodule Ping.Game do
       game_id: game_id,
       players: Setup.gen_game_players(players),
       max_players: config(:max_players) || 6,
-      balls: %{aaa: %Ball{}},
+      balls: Setup.gen_game_ball(),
       walls: Setup.gen_game_walls()
     }
 
-    schedule_updates()
+    start()
 
     {:ok, state}
   end
 
-  def schedule_updates do
+  defp start_delay do
+    @start_delay
+  end
+
+  defp start do
+    Process.send_after(self(), :update, start_delay())
+  end
+
+  defp schedule_updates do
     Process.send_after(self(), :update, update_rate())
   end
 
@@ -143,19 +152,24 @@ defmodule Ping.Game do
   end
 
   def handle_info(:update, state) do
-    schedule_updates()
-    
-    IO.puts "updates"
+    {updated_players, updated_balls, _out_players} = Engine.get_game_updates(state)
+
+    new_state =
+      state
+      |> Map.replace!(:players, updated_players)
+      |> Map.replace!(:balls, updated_balls)
+
     GameChannel.broadcast_game_update(
-      state.game_id,
+      new_state.game_id,
       %{
-        players: state.players,
-        balls: state.balls,
-        walls: state.walls
+        players: new_state.players,
+        balls: new_state.balls,
+        walls: new_state.walls
       }
     )
 
-    {:noreply, state}
+    schedule_updates()
+    {:noreply, new_state}
   end
 
   def handle_call(:id, _from, state) do
@@ -167,18 +181,18 @@ defmodule Ping.Game do
   """
   def handle_call({:player_leave, p_id}, _from, state) do
     new_players = Map.delete(state.players, p_id)
-  
+
     state = %{state | players: new_players}
 
     if length(Map.keys(state.players)) == 0 do
       {:stop, :normal, :no_players, state}
     else
       {:reply, state, state}
-    end 
+    end
   end
 
   @doc """
-  Returns whether or not the player is in the game. 
+  Returns whether or not the player is in the game.
   """
   def handle_call({:has_player, player_id}, _from, state) do
     {:reply, Map.has_key?(state.players, player_id), state}
@@ -203,42 +217,7 @@ defmodule Ping.Game do
   Supports `left`, `right`, `rotate_left`, `rotate_right`.
   """
   def handle_call({:handle_command, command, type, player_id}, _from, state) do
-    player = Map.get(state.players, player_id)
-
-    cmd = cond do
-      type == :press ->
-        case command do
-          :left -> 
-            &Player.move_left/1
-
-          :right ->
-            &Player.move_right/1
-
-          :rotate_left -> 
-            &Player.rotate_left/1
-
-          :rotate_right -> 
-            &Player.rotate_right/1
-        end
-      type == :release ->
-        &Player.stop/1
-    end
-
-    update_player_state(cmd, state, player)
-  end
-
-  defp update_player_state(state, player) do
-    new_players = Map.replace!(state.players, player.id, player)
-
-    state = %{state | players: new_players}
-  
-    {:reply, state, state}
-  end
-
-  defp update_player_state(command, state, player) do
-    updated_player = command.(player)
-
-    update_player_state(state, updated_player)
+    Engine.handle_player_command(command, type, player_id, state)
   end
 
   defp refresh_rate do
@@ -246,7 +225,7 @@ defmodule Ping.Game do
   end
 
   defp update_rate do
-    round(1_000 / refresh_rate()) 
+    round(1_000 / refresh_rate())
   end
 
   @spec config(atom()) :: term

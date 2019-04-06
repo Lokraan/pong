@@ -7,24 +7,32 @@ defmodule Ping.Game.Ball do
     x: 0,
     y: 0,
     vector: %Vector{},
-    radius: 10
+    radius: 10,
+    bounces: 0
   )
 
-  def new_ball(x, y) do
+  def new_ball(x, y, vx, vy) do
     %Ball{
       x: x,
       y: y,
       vector: %Vector{
-        x: 0,
-        y: 0
+        x: vx,
+        y: vy
       }
     }
   end
 
-  def step(ball) do
-    %Ball{
-      x: ball.x + ball.vector.x,
-      y: ball.y + ball.vector.y,
-    }
+  defp speed(ball) do
+    :math.log2(ball.bounces + 2)
+  end
+
+  def update(ball) do
+    x_change = ball.vector.x * speed(ball)
+    y_change = ball.vector.y * speed(ball)
+
+    ball
+    |> Map.replace!(:x, ball.x + x_change)
+    |> Map.replace!(:y, ball.y + y_change)
+    |> IO.inspect
   end
 end

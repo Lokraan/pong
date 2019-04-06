@@ -1,45 +1,72 @@
 defmodule Ping.Game.Physics do
   alias Ping.Game.{Ball, Vector}
 
-  def wall_ball_collision?(%Ball{} = b, w) do
-    # calc delta distance: source point to line start
-    dx = b.x - w.x0
-    dy = b.y - w.y0
+  @radius_buffer 0
 
-    # calc delta distance: line start to end
-    dxx = w.x1 - w.x0
-    dyy = w.y1 - w.y0
+  defp radius_buffer do
+    @radius_buffer
+  end
 
-    # Calc position on line normalized between 0.00 & 1.00
-    # == dot product divided by delta line distances squared
-    t = (dx * dxx + dy * dyy) / (dxx * dxx + dyy * dyy)
+  defp dist(x0, y0, x1, y1) do
+    dx = x0 - x1
+    dy = y0 - y1
 
-    # clamp results to being on the segment
-    {x, y} = 
-      cond do
-        t < 0 ->
-          {w.x0, w.y0}
+    :math.sqrt((dx * dx) + (dy * dy))
+  end
 
-        t > 1 ->
-          {w.x1, w.y1}
-        
-        true ->
-          # calc nearest pt on line
-          {w.x0 + dxx * t, w.y0 + dyy * t}
-      end
+  defp point_circle(px, py, cx, cy, r) do
+    distance = dist(px, py, cx, cy)
 
-    {x, y, (t >= 0 and t <= 1)}
+    distance <= (r + radius_buffer())
+  end
+
+  defp line_point(x0, y0, x1, y1, px, py) do
+    d1 = dist(px, py, x0, y0)
+    d2 = dist(px, py, x1, y1)
+
+    line_len = dist(x0, y0, x1, y1)
+    buffer = 10
+
+    (d1 + d2 >= line_len - buffer) and (d1 + d2 <= line_len + buffer)
+  end
+
+  def circle_collide_with_line?(%Ball{} = b, w) do
+    inside1 = point_circle(w.x0, w.y0, b.x, b.y, b.radius)
+    inside2 = point_circle(w.x1, w.y1, b.x, b.y, b.radius)
+
+    cond do
+      inside1 or inside2 ->
+        true
+
+      true ->
+        dx = w.x0 - w.x1
+        dy = w.y0 - w.y1
+
+        len = :math.sqrt((dx * dx) + (dy * dy))
+        dot =
+          (((b.x - w.x0) * (w.x1 - w.x0))  + ((b.y - w.y0) * (w.y1 - w.y0))) / (len * len)
+
+        closest_x = w.x0 + (dot * (w.x1 - w.x0))
+        closest_y = w.y0 + (dot * (w.y1 - w.y0))
+
+        on_segment? = line_point(w.x0, w.y0, w.x1, w.y1, closest_x, closest_y)
+
+        case on_segment? do
+          true ->
+            distance = dist(closest_x, closest_y, b.x, b.y)
+
+            distance <= (b.radius + radius_buffer())
+
+          false ->
+            false
+        end
+    end
   end
 
   def wall_ball_collision(%Ball{} = b, w) do
-    case wall_ball_collision?(b, w) do
-      {_, _, true} ->
-        v = Vector.reflect(b.vector, w.reflection_vector)
-        b = Map.replace!(b, :vector, v)
+    v = Vector.reflect(b.vector, w.reflection_vector)
+    b = Map.replace!(b, :vector, v)
 
-        {b, w}
-      _ ->
-        {b, w} 
-    end
+    {b, w}
   end
 end

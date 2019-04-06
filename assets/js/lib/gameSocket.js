@@ -3,10 +3,10 @@ import Visual from "./gameVisual"
 const Game = {
   init(socket, game_id) {
     this.commands = {
-      119: "rotate_right",
-      114: "rotate_left",
-      100: "move_right", 
-      97: "move_left"
+      "w": "rotate_right",
+      "s": "rotate_left",
+      "a": "move_left", 
+      "d": "move_right"
     }
 
     this.gameChannel = socket.channel(game_id)
@@ -34,13 +34,14 @@ const Game = {
     })
 
     window.addEventListener("keypress", (e) => {
-      if(e.keyCode in this.commands) {
+      const key = e.key
+      if(key in this.commands) {
         const command = {
-          command: this.commands[e.keyCode],
+          command: this.commands[key],
           type: "press"
         }
 
-        console.log(command);
+        console.log(command)
 
         this.gameChannel.push("game:command", command)
           .receive("ok", (reasons) =>  console.log(reasons))
@@ -49,13 +50,15 @@ const Game = {
     })
 
     window.addEventListener("keyup", (e) => {
-      if(e.keyCode in this.commands) {
+      const key = e.key
+      console.log(e, key, "keyup")
+      if(key in this.commands) {
         const command = {
-          command: this.commands[e.keyCode],
+          command: this.commands[key],
           type: "release"
         }
 
-        console.log(command);
+        console.log(command)
         
         this.gameChannel.push("game:command", command)
           .receive("ok", (reasons) =>  console.log(reasons))

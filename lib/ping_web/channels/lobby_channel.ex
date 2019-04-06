@@ -17,11 +17,11 @@ defmodule PingWeb.LobbyChannel do
   def join("lobby:find", _params, socket) do
     lobbies = DynamicSupervisor.which_children(LobbySupervisor)
     case lobbies do
-      [] -> 
+      [] ->
         # generate a new lobby
         lobby_id = gen_id()
 
-        {:ok, pid} = DynamicSupervisor.start_child(LobbySupervisor, 
+        {:ok, pid} = DynamicSupervisor.start_child(LobbySupervisor,
           {Lobby, lobby_id: lobby_id})
 
         lobby_id = Lobby.get_id(pid)
@@ -39,12 +39,12 @@ defmodule PingWeb.LobbyChannel do
   @doc """
   Handles players joining the lobby by calling `Lobby.player_join`
   and handling the responses from the function.
-  
+
   On `:ok` the player succesfully joined the lobby and the lobby_id
   is assigned to the socket. After this `{:ok, "Joined"}` is
   returned.
   On `:full` the player that just joined was the last player to be
-  able to join and the game is now being created. After the game is 
+  able to join and the game is now being created. After the game is
   created, the game_id is broadcasted to all players in the lobby.
   On `:lobby_already_full` the lobby has already been filled up,
   returns `{:error, "Lobby already full."}
@@ -60,14 +60,14 @@ defmodule PingWeb.LobbyChannel do
         socket = assign(socket, :lobby_id, lobby_id)
 
         resp = get_lobby_join_resp(lobby_id)
-        
+
         {:ok, resp, socket}
 
       {:now_full, players} ->
         socket = assign(socket, :lobby_id, lobby_id)
 
         game_id = gen_id()
-        {:ok, pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
+        {:ok, _pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
           Ping.Game, game_id: game_id, players: players
         })
 
@@ -103,7 +103,7 @@ defmodule PingWeb.LobbyChannel do
 
   defp get_lobby_join_resp(lobby_id) do
     lobby_state = Lobby.get_state(lobby_id)
-    
+
     %{
       lobby_id: topic(lobby_id),
       players: length(Map.keys(lobby_state.players)),

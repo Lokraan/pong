@@ -7,15 +7,17 @@ defmodule PingWeb.GameChannel do
     PingWeb.Endpoint.broadcast!(topic(game_id), "game:update", data)
   end
 
-  def join("game:" <> game_id, _params, socket) do
-    {:ok, :joined, socket}
+  def join("game:" <> _game_id, _params, socket) do
+    {:ok, socket}
   end
 
   def handle_in("game:command", %{"command" => command, "type" => type}, socket) do
     Game.handle_command(socket.assigns.game_id, command, type, socket.assigns.user_id)
+
+    {:reply, :ok, socket}
   end
 
-    @doc """
+  @doc """
   Handles a player's leave.
   """
   def handle_in("game:leave", _, socket) do

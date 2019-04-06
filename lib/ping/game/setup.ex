@@ -7,7 +7,7 @@ defmodule Ping.Game.Setup do
   staring at my code wondering why it was so bad.
   (I still am but to a lesser degree).
   """
-  alias Ping.Game.{Player, Wall, Ball}
+  alias Ping.Game.{Player, Wall, Ball, Vector}
 
   defp wall_size do
     config(:wall_size)
@@ -78,24 +78,22 @@ defmodule Ping.Game.Setup do
       {x0, y0, x1, y1} = get_wall_positions(i)
       {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
 
-      Wall.new_wall(x0, y0, x1, y1, vx, vy)
+      Wall.new_wall(x0, y0, x1, y1, vx, vy, i)
     end)
   end
 
   def gen_game_players(players) do
     Enum.with_index(players)
-    |> Enum.reduce(%{}, fn {{id, name}, index}, %{} = m ->
+    |> Enum.reduce(%{}, fn {{id, name}, i}, %{} = m ->
+      index = i + 2
       {x0, y0, x1, y1} = get_wall_positions(index)
-      IO.inspect {x0, y0, x1, y1} 
 
       {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
-      IO.inspect {vx, vy}, label: :get_wall_centripetal_vector2
 
       mid_x = round (x0 + x1) / 2 + (25 * vx)
       mid_y = round (y0 + y1) / 2 + (25 * vy)
 
       {edge_vx, edge_vy} = get_wall_edge_vector(x0, y0, x1, y1)
-      IO.inspect {edge_vx, edge_vy}, label: :wall_edge_vector
 
       x_offset = (Player.width / 2) * edge_vx
       y_offset = (Player.height / 2) * edge_vy
@@ -105,9 +103,14 @@ defmodule Ping.Game.Setup do
       x1 = round mid_x + x_offset
       y1 = round mid_y + y_offset
 
-      player = Player.new_player(x0, y0, x1, y1, name, index)
+      player = Player.new_player(x0, y0, x1, y1, name, index, %Vector{x: vx, y: vy})
       Map.put(m, id, player)
     end)
+  end
+
+  def gen_game_ball do
+    {x, y} = get_field_center()
+    %{aaa: Ball.new_ball(x, y, :rand.uniform() * 2 - 1, :rand.uniform() * 2 - 1)}
   end
 
   @spec config(atom()) :: term
