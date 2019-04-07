@@ -25,47 +25,61 @@ defmodule Ping.Game.Physics do
     d2 = dist(px, py, x1, y1)
 
     line_len = dist(x0, y0, x1, y1)
-    buffer = 10
+    buffer = 0
 
     (d1 + d2 >= line_len - buffer) and (d1 + d2 <= line_len + buffer)
+  end
+
+  defp get_circle_dist(%Ball{} = b, w) do
+    dx = w.x0 - w.x1
+      dy = w.y0 - w.y1
+
+      len = :math.sqrt((dx * dx) + (dy * dy))
+      dot =
+        (((b.x - w.x0) * (w.x1 - w.x0))  + ((b.y - w.y0) * (w.y1 - w.y0))) / (len * len)
+
+      closest_x = w.x0 + (dot * (w.x1 - w.x0))
+      closest_y = w.y0 + (dot * (w.y1 - w.y0))
+
+      on_segment? = line_point(w.x0, w.y0, w.x1, w.y1, closest_x, closest_y)
+
+      if on_segment? do
+        {:ok, dist(closest_x, closest_y, b.x, b.y)}
+      else
+        {:error, :nil}
+      end
   end
 
   def circle_collide_with_line?(%Ball{} = b, w) do
     inside1 = point_circle(w.x0, w.y0, b.x, b.y, b.radius)
     inside2 = point_circle(w.x1, w.y1, b.x, b.y, b.radius)
 
-    cond do
-      inside1 or inside2 ->
-        true
+    if inside1 or inside2 do
+      true
+    else
+      dist = get_circle_dist(b, w)
 
-      true ->
-        dx = w.x0 - w.x1
-        dy = w.y0 - w.y1
+      case dist do
+        {:ok, d} ->
+          d <= (b.radius + radius_buffer())
 
-        len = :math.sqrt((dx * dx) + (dy * dy))
-        dot =
-          (((b.x - w.x0) * (w.x1 - w.x0))  + ((b.y - w.y0) * (w.y1 - w.y0))) / (len * len)
-
-        closest_x = w.x0 + (dot * (w.x1 - w.x0))
-        closest_y = w.y0 + (dot * (w.y1 - w.y0))
-
-        on_segment? = line_point(w.x0, w.y0, w.x1, w.y1, closest_x, closest_y)
-
-        case on_segment? do
-          true ->
-            distance = dist(closest_x, closest_y, b.x, b.y)
-
-            distance <= (b.radius + radius_buffer())
-
-          false ->
-            false
-        end
+        _ ->
+          false
+      end
     end
   end
 
   def wall_ball_collision(%Ball{} = b, w) do
+    {:ok, dist} = get_circle_dist(b, w)
+    d = dist + :math.sqrt(b.radius)
+
     v = Vector.reflect(b.vector, w.reflection_vector)
-    b = Map.replace!(b, :vector, v)
+
+    b =
+      b
+      |> Map.replace!(:vector, v)
+      |> Map.update!(:x, &(&1 + v.x * d))
+      |> Map.update!(:y, &(&1 + v.y * d))
 
     {b, w}
   end

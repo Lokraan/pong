@@ -33,6 +33,5 @@ defmodule Ping.Game.Ball do
     ball
     |> Map.replace!(:x, ball.x + x_change)
     |> Map.replace!(:y, ball.y + y_change)
-    |> IO.inspect
   end
 end

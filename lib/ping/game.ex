@@ -152,7 +152,7 @@ defmodule Ping.Game do
   end
 
   def handle_info(:update, state) do
-    {updated_players, updated_balls, _out_players} = Engine.get_game_updates(state)
+    {updated_players, updated_balls} = Engine.get_game_updates(state)
 
     new_state =
       state
@@ -191,31 +191,18 @@ defmodule Ping.Game do
     end
   end
 
-  @doc """
-  Returns whether or not the player is in the game.
-  """
   def handle_call({:has_player, player_id}, _from, state) do
     {:reply, Map.has_key?(state.players, player_id), state}
   end
 
-  @doc """
-    Handle's `:get_state` by returning the state.
-  """
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
   end
 
-  @doc """
-    Handle's `:get_player_state` by returning the Player struct.
-  """
   def handle_call({:get_player_state, p_id}, _from, state) do
     {:reply, Map.get(state.players, p_id), state}
   end
 
-  @doc """
-  Handles a user command by updating the user state and in the game state.
-  Supports `left`, `right`, `rotate_left`, `rotate_right`.
-  """
   def handle_call({:handle_command, command, type, player_id}, _from, state) do
     Engine.handle_player_command(command, type, player_id, state)
   end

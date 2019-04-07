@@ -16,7 +16,7 @@ defmodule Ping.Game.Engine do
 
     case wall_collisions do
       [w] ->
-        {b, _w} = Physics.wall_ball_collision(ball, w)
+        {b, w} = Physics.wall_ball_collision(ball, w)
         new_ball = Map.replace!(b, :bounces, b.bounces + 1)
 
 
@@ -63,8 +63,8 @@ defmodule Ping.Game.Engine do
     Enum.reduce(balls, %{}, fn {id, %Ball{} = ball}, %{} = m ->
       ball_wall_collisions = get_ball_wall_collisions(ball, walls)
       ball_player_collisions = get_ball_player_collisions(ball, players)
-    
-      {new_ball, out_players} = 
+
+      {new_ball, out_players} =
         process_ball_collisions(ball, ball_wall_collisions, ball_player_collisions)
 
       m
@@ -81,24 +81,26 @@ defmodule Ping.Game.Engine do
     end)
   end
 
-  def get_out_players(players, out_players) do
-    Enum.filter(players, fn {_id, p} ->
-      Enum.member?(out_players, p.wall_index)
-    end)
-  end
-
   def get_game_updates(game) do
-    updated_players = update_players(game.players)
     ball_update_info = get_ball_update_info(game.balls, game.walls, game.players)
 
-    updated_balls = 
+    out_players = Map.get(ball_update_info, :out_players)
+    updated_players =
+      update_players(game.players)
+      |> Enum.reduce(%{}, fn {id, %Player{} = p}, %{} = m ->
+        if not Enum.member?(out_players, p.wall_index) do
+          Map.put(m, id, p)
+        else
+          m
+        end
+      end)
+
+    updated_balls =
       ball_update_info
       |> Map.delete(:out_players)
       |> update_balls()
 
-    out_players = get_out_players(updated_players, Map.get(ball_update_info, :out_players))
-
-    {updated_players, updated_balls, out_players}
+    {updated_players, updated_balls}
   end
 
   def handle_player_command(command, type, player_id, state) do
@@ -107,16 +109,16 @@ defmodule Ping.Game.Engine do
     cmd = cond do
       type == "press" ->
         case command do
-          "move_left" -> 
+          "move_left" ->
             &Player.move_left/1
 
           "move_right" ->
             &Player.move_right/1
 
-          "rotate_left" -> 
+          "rotate_left" ->
             &Player.rotate_left/1
 
-          "rotate_right" -> 
+          "rotate_right" ->
             &Player.rotate_right/1
         end
       type == "release" ->
