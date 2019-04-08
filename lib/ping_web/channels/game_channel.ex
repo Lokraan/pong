@@ -7,6 +7,10 @@ defmodule PingWeb.GameChannel do
     PingWeb.Endpoint.broadcast!(topic(game_id), "game:update", data)
   end
 
+  def broadcast_game_end(game_id) do
+    PingWeb.Endpoint.broadcast!(topic(game_id), "game:end", %{})
+  end
+
   def join("game:" <> _game_id, _params, socket) do
     {:ok, socket}
   end

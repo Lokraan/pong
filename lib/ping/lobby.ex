@@ -2,16 +2,19 @@ defmodule Ping.Lobby do
   use GenServer
 
   alias __MODULE__
+  alias PingWeb.LobbyChannel
+
   defstruct(
     id: :wow,
     players: %{},
-    max_players: 6
+    max_players: 6,
+    force_start_votes: MapSet.new()
   )
 
   def start_link(opts) do
     lobby_id = Keyword.fetch!(opts, :lobby_id)
-    
-    GenServer.start_link(__MODULE__, [lobby_id], 
+
+    GenServer.start_link(__MODULE__, [lobby_id],
       name: {:via, Registry, {Ping.LobbyRegistry, lobby_id}}
     )
   end
@@ -60,6 +63,12 @@ defmodule Ping.Lobby do
     |> GenServer.call(:get_state)
   end
 
+  def force_start_vote(lobby_id, player_id) do
+    lobby_id
+    |> find_lobby!()
+    |> GenServer.call({:force_start_upvote, player_id})
+  end
+
   def handle_call(:get_players, _from, state), do: {:reply, state.players, state}
 
   def handle_call(:get_id, _from, state), do: {:reply, state.id, state}
@@ -79,10 +88,12 @@ defmodule Ping.Lobby do
 
       new_players = Map.put(state.players, player.user_id, player.username)
 
-      state = %{state | players: new_players}
-      
+      state =
+        state
+        |> Map.replace!(:players, new_players)
+
       if ((players + 1) == state.max_players) do
-        {:stop, :lobby_closing, {:now_full, state.players}, state}
+        {:stop, :shutdown, {:now_full, state.players}, state}
       else
         {:reply, :ok, state}
       end
@@ -94,8 +105,29 @@ defmodule Ping.Lobby do
 
   def handle_call({:player_leave, player_id}, _from, state) do
     new_players = Map.delete(state.players, player_id)
-    
+
     {:reply, :ok, %{state | players: new_players}}
+  end
+
+  def handle_call({:force_start_upvote, player_id}, _from, state) do
+    new_state =
+      state
+      |> Map.replace!(:force_start_votes, MapSet.put(state.force_start_votes, player_id))
+
+    votes = MapSet.size(new_state.force_start_votes)
+    p_count = map_size(state.players)
+
+    data = %{
+      force_start_status: "#{votes}/#{p_count}"
+    }
+
+    LobbyChannel.broadcast_force_start_update(state.id, data)
+
+    if votes > 1 and votes == p_count do
+      {:reply, {:force_start, new_state.players}, new_state}
+    else
+      {:reply, :ok, state}
+    end
   end
 
   @spec config(atom()) :: term
@@ -117,5 +149,5 @@ defmodule Ping.Lobby do
     else
       {:ok, :not_joined}
     end
-  end 
+  end
 end

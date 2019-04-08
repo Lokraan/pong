@@ -168,8 +168,15 @@ defmodule Ping.Game do
       }
     )
 
-    schedule_updates()
-    {:noreply, new_state}
+    if map_size(new_state.players) > 1 do
+      schedule_updates()
+
+      {:noreply, new_state}
+    else
+      GameChannel.broadcast_game_end(new_state.game_id)
+
+      {:stop, :normal, new_state}
+    end
   end
 
   def handle_call(:id, _from, state) do
@@ -184,7 +191,7 @@ defmodule Ping.Game do
 
     state = %{state | players: new_players}
 
-    if length(Map.keys(state.players)) == 0 do
+    if map_size(state.players) == 0 do
       {:stop, :normal, :no_players, state}
     else
       {:reply, state, state}

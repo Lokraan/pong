@@ -66,15 +66,7 @@ defmodule PingWeb.LobbyChannel do
       {:now_full, players} ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        game_id = gen_id()
-        {:ok, _pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
-          Ping.Game, game_id: game_id, players: players
-        })
-
-        PingWeb.Endpoint.broadcast!(topic(lobby_id), "game:start",
-          %{game_id: game_id})
-
-        {:ok, %{game_id: game_id}, socket}
+        start_game(lobby_id, players, socket)
 
       :already_joined ->
         socket = assign(socket, :lobby_id, lobby_id)
@@ -86,6 +78,22 @@ defmodule PingWeb.LobbyChannel do
       :full ->
         {:error, :full}
     end
+  end
+
+  def start_game(lobby_id, players, socket) do
+    game_id = gen_id()
+    {:ok, _pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
+      Ping.Game, game_id: game_id, players: players
+    })
+
+    PingWeb.Endpoint.broadcast!(topic(lobby_id), "game:start",
+      %{game_id: game_id})
+
+    {:ok, %{game_id: game_id}, socket}
+  end
+
+  def broadcast_force_start_update(lobby_id, data) do
+    PingWeb.Endpoint.broadcast!(topic(lobby_id), "force_start:update", data)
   end
 
   @doc """
@@ -101,13 +109,30 @@ defmodule PingWeb.LobbyChannel do
     {:reply, {:ok, %{}}, socket}
   end
 
+  def handle_in("force_start:upvote", _, socket) do
+    lobby_id = socket.assigns.lobby_id
+    user_id = socket.assigns.user_id
+
+    case Lobby.force_start_vote(lobby_id, user_id) do
+      {:force_start, players} ->
+        start_game(lobby_id, players, socket)
+
+      _ ->
+        {:reply, :ok, socket}
+    end
+  end
+
   defp get_lobby_join_resp(lobby_id) do
     lobby_state = Lobby.get_state(lobby_id)
 
+    votes = MapSet.size(lobby_state.force_start_votes)
+    p_count = map_size(lobby_state.players)
+
     %{
       lobby_id: topic(lobby_id),
-      players: length(Map.keys(lobby_state.players)),
-      max_players: lobby_state.max_players
+      players: p_count,
+      max_players: lobby_state.max_players,
+      force_start_status: "#{votes}/#{p_count}"
     }
   end
 
