@@ -3,6 +3,7 @@ const LobbySocket = {
     this.socket = socket
 
     this.lobbyStatus = document.getElementById("lobby-status")
+    this.forceStart = document.getElementById("force-start")
     this.findLobby()
 
     return this
@@ -23,8 +24,9 @@ const LobbySocket = {
     const wow = this    
     this.lobbyChannel.join()
       .receive("ok", (resp) => {
-        console.log(`Lobby joined ${resp}`)
+        console.log("Lobby Joined", resp)
         this.lobbyStatus.innerHTML = `In Lobby ${lobby_id}`
+        this.forceStart.innerHTML = `${resp.force_start_status}`
 
         if(resp.game_id) {
           const redir = `/game/${resp.game_id}`
@@ -54,18 +56,13 @@ const LobbySocket = {
   },
 
   bind() {
-    this.forceStart = document.getElementById("force-start")
+    this.lobbyChannel.on("force_start:update", (data) => {
+      this.forceStart.innerHTML = `${data.force_start_status}`
 
-    this.lobbyChannel.on("force_start:upvote", () => {
-      const split = this.forceStart.innerHTML.split("/")
-      const votes = parseInt(split[0]) + 1
-      this.forceStart.innerHTML = `${votes}/6`
-    })
-
-    this.lobbyChannel.on("force_start:downvote", () => {
-      const split = this.forceStart.innerHTML.split("/")
-      const votes = parseInt(split[0]) - 1
-      this.forceStart.innerHTML = `${votes}/6`
+      if(data.game_id) {
+        const redir = `/game/${resp.game_id}`
+        window.location.replace(redir)
+      }
     })
 
     this.lobbyChannel.on("game:start", (data) => {
@@ -75,6 +72,7 @@ const LobbySocket = {
     })
 
     this.forceStart.addEventListener("click", (e) => {
+      console.log("click click")
       e.preventDefault()
       this.lobbyChannel.push("force_start:upvote", {})
     })

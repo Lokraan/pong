@@ -29,7 +29,14 @@ const Game = {
       this.gameVisual.update(data)
     })
 
-    this.gameChannel.on("game:end", () => {
+    this.gameChannel.on("game:end", (data) => {
+      $("#gameEndModal").modal("show")
+
+      $("#gameEndModal").on('hide.bs.modal', function (e) {
+        window.location.replace("/")
+      })
+      
+      console.log("game:end", data)
       this.gameChannel.leave()
     })
 
@@ -44,8 +51,8 @@ const Game = {
         console.log(command)
 
         this.gameChannel.push("game:command", command)
-          .receive("ok", (reasons) =>  console.log(reasons))
-          .receive("error", (reasons) =>  console.log(reasons))
+          .receive("ok", (reasons) => console.log(reasons))
+          .receive("error", (reasons) => console.log(reasons))
       }
     })
 

@@ -13,7 +13,6 @@ import "phoenix_html"
 
 // Import local files
 import loadView from "./viewLoader"
-import socket from "./socket"
 
 function handleDOMContentLoaded() {
   // Get the current view name
