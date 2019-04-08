@@ -63,24 +63,28 @@ defmodule Ping.Game.Physics do
         {:ok, d} ->
           d <= (b.radius + radius_buffer())
 
-        _ ->
+        {:error, :nil} ->
           false
       end
     end
   end
 
   def wall_ball_collision(%Ball{} = b, w) do
-    {:ok, dist} = get_circle_dist(b, w)
-    d = dist + :math.sqrt(b.radius)
+    case get_circle_dist(b, w) do
+      {:ok, dist} ->
+        d = dist + :math.sqrt(b.radius)
 
-    v = Vector.reflect(b.vector, w.reflection_vector)
+        v = Vector.reflect(b.vector, w.reflection_vector)
 
-    b =
-      b
-      |> Map.replace!(:vector, v)
-      |> Map.update!(:x, &(&1 + v.x * d))
-      |> Map.update!(:y, &(&1 + v.y * d))
+        b =
+          b
+          |> Map.replace!(:vector, v)
+          |> Map.update!(:x, &(&1 + v.x * d))
+          |> Map.update!(:y, &(&1 + v.y * d))
 
-    {b, w}
+        {b, w}
+      _ ->
+        {b, w}
+    end
   end
 end

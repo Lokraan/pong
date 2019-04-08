@@ -1,11 +1,16 @@
 $text-color: white;
 $primary: #FFBF42;
 
-html, body, .container, .modal-content {
+html, body {
   background: #080808 !important;
   color: $text-color !important;
 }
 
-.btn {
-  text-align: center;
+.modal-content {
+  background-color: #fff0;
+}
+
+.btn .btn-secondary {
+  background-color: black !important;
+  border-color: white !important;
 }

@@ -11,7 +11,7 @@ defmodule Ping.Game.Engine do
 
   defp get_ball_wall_collisions(ball, walls) do
     wall_collisions = Enum.filter(walls, fn w ->
-        Physics.circle_collide_with_line?(ball, w)
+      Physics.circle_collide_with_line?(ball, w)
     end)
 
     case wall_collisions do
