@@ -22,7 +22,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :ping, Ping, max_players: 2
+config :ping, Ping, max_players: 6
 
 config :ping, Ping.Game,
   wall_size: 200,

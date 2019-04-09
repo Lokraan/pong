@@ -18,7 +18,7 @@ defmodule Ping.Game.Setup do
   end
 
   defp get_field_center do
-    x0 = round wall_size() + wall_size() * :math.cos(-1 * 2 * :math.pi / walls()) 
+    x0 = round wall_size() + wall_size() * :math.cos(-1 * 2 * :math.pi / walls())
     y0 = round wall_size() + wall_size() * :math.sin(-1 * 2 * :math.pi / walls())
     x1 = round wall_size() + wall_size() * :math.cos((-1 + (walls() / 2)) * 2 * :math.pi / walls())
     y1 = round wall_size() + wall_size() * :math.sin((-1 + (walls() / 2)) * 2 * :math.pi / walls())
@@ -43,7 +43,7 @@ defmodule Ping.Game.Setup do
   end
 
   defp get_wall_positions(i) do
-    x0 = round wall_size() + wall_size() * :math.cos((i - 1) * 2 * :math.pi / walls()) 
+    x0 = round wall_size() + wall_size() * :math.cos((i - 1) * 2 * :math.pi / walls())
     y0 = round wall_size() + wall_size() * :math.sin((i - 1) * 2 * :math.pi / walls())
     x1 = round wall_size() + wall_size() * :math.cos(i * 2 * :math.pi / walls())
     y1 = round wall_size() + wall_size() * :math.sin(i * 2 * :math.pi / walls())
@@ -53,7 +53,7 @@ defmodule Ping.Game.Setup do
 
   defp normalize_vals(a, b) do
     max_val = max(abs(a), abs(b))
-    
+
     a_normalized = a / max_val
     b_normalized = b / max_val
 
@@ -74,7 +74,7 @@ defmodule Ping.Game.Setup do
   end
 
   def gen_game_walls do
-    Enum.map(0..5, fn(i) ->
+    Enum.map(0..walls(), fn(i) ->
       {x0, y0, x1, y1} = get_wall_positions(i)
       {vx, vy} = get_wall_centripetal_vector(x0, y0, x1, y1)
 

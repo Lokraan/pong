@@ -95,6 +95,15 @@ defmodule Ping.Lobby do
       if ((players + 1) == state.max_players) do
         {:stop, :shutdown, {:now_full, state.players}, state}
       else
+        votes = MapSet.size(state.force_start_votes)
+        p_count = map_size(state.players)
+
+        data = %{
+          force_start_status: "#{votes}/#{p_count}"
+        }
+
+        LobbyChannel.broadcast_force_start_update(state.id, data)
+
         {:reply, :ok, state}
       end
     else
@@ -126,7 +135,7 @@ defmodule Ping.Lobby do
     if votes > 1 and votes == p_count do
       {:reply, {:force_start, new_state.players}, new_state}
     else
-      {:reply, :ok, state}
+      {:reply, :ok, new_state}
     end
   end
 
