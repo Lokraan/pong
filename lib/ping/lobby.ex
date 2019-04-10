@@ -37,6 +37,7 @@ defmodule Ping.Lobby do
     end
   end
 
+  @spec get_id(atom() | pid() | {atom(), any()} | {:via, atom(), any()}) :: any()
   def get_id(pid), do: GenServer.call(pid, :get_id)
 
   def player_join(lobby_id, player) do
@@ -95,14 +96,8 @@ defmodule Ping.Lobby do
       if ((players + 1) == state.max_players) do
         {:stop, :shutdown, {:now_full, state.players}, state}
       else
-        votes = MapSet.size(state.force_start_votes)
-        p_count = map_size(state.players)
 
-        data = %{
-          force_start_status: "#{votes}/#{p_count}"
-        }
-
-        LobbyChannel.broadcast_force_start_update(state.id, data)
+        LobbyChannel.broadcast_update(state.id, state)
 
         {:reply, :ok, state}
       end
@@ -115,22 +110,20 @@ defmodule Ping.Lobby do
   def handle_call({:player_leave, player_id}, _from, state) do
     new_players = Map.delete(state.players, player_id)
 
-    {:reply, :ok, %{state | players: new_players}}
+    new_state = %{state | players: new_players}
+
+    LobbyChannel.broadcast_update(new_state.id, new_state)
+    {:reply, :ok, new_state}
   end
 
   def handle_call({:force_start_upvote, player_id}, _from, state) do
     new_state =
-      state
-      |> Map.replace!(:force_start_votes, MapSet.put(state.force_start_votes, player_id))
+      %{state | force_start_votes: MapSet.put(state.force_start_votes, player_id)}
+
+    LobbyChannel.broadcast_update(state.id, new_state)
 
     votes = MapSet.size(new_state.force_start_votes)
     p_count = map_size(state.players)
-
-    data = %{
-      force_start_status: "#{votes}/#{p_count}"
-    }
-
-    LobbyChannel.broadcast_force_start_update(state.id, data)
 
     if votes > 1 and votes == p_count do
       {:reply, {:force_start, new_state.players}, new_state}

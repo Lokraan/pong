@@ -2,11 +2,36 @@ const LobbySocket = {
   init(socket) {
     this.socket = socket
 
-    this.lobbyStatus = document.getElementById("lobby-status")
-    this.forceStart = document.getElementById("force-start")
+    this.$lobbyStatus = $("#lobby-status")
+    this.$forceStart = $("#force-start")
+    this.$playerList = $("#player-list")
+
     this.findLobby()
 
     return this
+  },
+
+  updateLobbyStatus(d) {
+    this.$lobbyStatus.empty()
+    this.$lobbyStatus.text(`${d}`)
+  },
+
+  updateForceStart(d) {
+    this.$forceStart.empty()
+    this.$forceStart.text(`${d}`)
+  },
+
+  updatePlayerList(d) {
+    this.$playerList.empty()
+    console.log(d)
+    
+    for(let id in d) {
+      const player = d[id]
+      console.log(id, player)
+      const li = $("<li class='list-group-item'></li>").text(player)
+
+      this.$playerList.append(li)
+    } 
   },
 
   findLobby() {
@@ -25,8 +50,9 @@ const LobbySocket = {
     this.lobbyChannel.join()
       .receive("ok", (resp) => {
         console.log("Lobby Joined", resp)
-        this.lobbyStatus.innerHTML = `In Lobby ${lobby_id}`
-        this.forceStart.innerHTML = `${resp.force_start_status}`
+        this.updateLobbyStatus(`In Lobby ${lobby_id}`)
+        this.updateForceStart(resp.force_start_status)
+        this.updatePlayerList(resp.players)
 
         if(resp.game_id) {
           const redir = `/game/${resp.game_id}`
@@ -56,8 +82,13 @@ const LobbySocket = {
   },
 
   bind() {
-    this.lobbyChannel.on("force_start:update", (data) => {
-      this.forceStart.innerHTML = `${data.force_start_status}`
+    this.lobbyChannel.on("lobby:update", (data) => {
+      console.log(data)
+      if(data.force_start_status)
+        this.updateForceStart(data.force_start_status)
+
+      if(data.players)
+        this.updatePlayerList(data.players)
 
       if(data.game_id) {
         const redir = `/game/${resp.game_id}`
@@ -71,7 +102,7 @@ const LobbySocket = {
       window.location.replace(redir)
     })
 
-    this.forceStart.addEventListener("click", (e) => {
+    this.$forceStart.click((e) => {
       console.log("click click")
       e.preventDefault()
       this.lobbyChannel.push("force_start:upvote", {})

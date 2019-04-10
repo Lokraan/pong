@@ -59,7 +59,10 @@ defmodule PingWeb.LobbyChannel do
       :ok ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        resp = get_lobby_join_resp(lobby_id)
+        resp =
+          lobby_id
+          |> Lobby.get_state()
+          |> get_lobby_resp()
 
         {:ok, resp, socket}
 
@@ -71,7 +74,10 @@ defmodule PingWeb.LobbyChannel do
       :already_joined ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        resp = get_lobby_join_resp(lobby_id)
+        resp =
+          lobby_id
+          |> Lobby.get_state()
+          |> get_lobby_resp()
 
         {:ok, resp, socket}
 
@@ -92,8 +98,10 @@ defmodule PingWeb.LobbyChannel do
     {:ok, %{game_id: game_id}, socket}
   end
 
-  def broadcast_force_start_update(lobby_id, data) do
-    PingWeb.Endpoint.broadcast!(topic(lobby_id), "force_start:update", data)
+  def broadcast_update(lobby_id, data) do
+    lobby_id
+    |> topic()
+    |> PingWeb.Endpoint.broadcast!("lobby:update", get_lobby_resp(data))
   end
 
   @doc """
@@ -122,16 +130,13 @@ defmodule PingWeb.LobbyChannel do
     end
   end
 
-  defp get_lobby_join_resp(lobby_id) do
-    lobby_state = Lobby.get_state(lobby_id)
-
+  defp get_lobby_resp(%Lobby{} = lobby_state) do
     votes = MapSet.size(lobby_state.force_start_votes)
     p_count = map_size(lobby_state.players)
 
     %{
-      lobby_id: topic(lobby_id),
-      players: p_count,
-      max_players: lobby_state.max_players,
+      lobby_id: topic(lobby_state.id),
+      players: lobby_state.players,
       force_start_status: "#{votes}/#{p_count}"
     }
   end
