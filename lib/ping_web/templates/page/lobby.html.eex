@@ -7,4 +7,6 @@
   <div class="flex justify-center">
     <button class="btn btn-outline-primary" id="force-start">0/6</button>
   </div>
+  <ul id="player-list" class="list-group flex justify-center">
+  </ul>
 </div>

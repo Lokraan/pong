@@ -14,3 +14,16 @@ html, body {
   background-color: black !important;
   border-color: white !important;
 }
+
+.list-group {
+  width: auto;
+  margin: auto;
+  padding-top: 5%;
+}
+
+.list-group-item {
+  display: block;
+  border-color: #fff !important;
+  background-color: #fff0 !important;
+  margin-block-start: 10px;
+}
