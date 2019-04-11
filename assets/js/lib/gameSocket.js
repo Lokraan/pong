@@ -1,7 +1,7 @@
 import Visual from "./gameVisual"
 
 const Game = {
-  init(socket, game_id) {
+  init(playerId, socket, game_id) {
     this.commands = {
       "w": "rotate_right",
       "s": "rotate_left",
@@ -9,8 +9,11 @@ const Game = {
       "d": "move_right"
     }
 
+    this.socket = socket
+    this.playerId = playerId
+
     this.$gameEndModal = $("#gameEndModal")
-    this.gameChannel = socket.channel(game_id)
+    this.gameChannel = this.socket.channel(game_id)
     this.gameChannel.join()
       .receive("ok", (resp) => {
         console.log(`Game ${resp}`)
@@ -27,7 +30,7 @@ const Game = {
 
   bind() {
     this.gameChannel.on("game:update", (data) =>  {
-      this.gameVisual.update(data)
+      this.gameVisual.update(this.playerId, data)
     })
 
     this.gameChannel.on("game:end", (data) => {
