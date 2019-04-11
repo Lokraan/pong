@@ -23,11 +23,9 @@ const LobbySocket = {
 
   updatePlayerList(d) {
     this.$playerList.empty()
-    console.log(d)
     
     for(let id in d) {
       const player = d[id]
-      console.log(id, player)
       const li = $("<li class='list-group-item'></li>").text(player)
 
       this.$playerList.append(li)
@@ -49,7 +47,6 @@ const LobbySocket = {
     const wow = this    
     this.lobbyChannel.join()
       .receive("ok", (resp) => {
-        console.log("Lobby Joined", resp)
         this.updateLobbyStatus(`In Lobby ${lobby_id}`)
         this.updateForceStart(resp.force_start_status)
         this.updatePlayerList(resp.players)
@@ -71,7 +68,6 @@ const LobbySocket = {
   },
 
   disconnect() {
-    console.log("disconnect")
     if(this.lobbyChannel)
       this.lobbyChannel.push("lobby:leave", {})
         .receive("ok", (resp) => console.log(resp, "disconnect2"))
@@ -83,7 +79,6 @@ const LobbySocket = {
 
   bind() {
     this.lobbyChannel.on("lobby:update", (data) => {
-      console.log(data)
       if(data.force_start_status)
         this.updateForceStart(data.force_start_status)
 
@@ -103,7 +98,6 @@ const LobbySocket = {
     })
 
     this.$forceStart.click((e) => {
-      console.log("click click")
       e.preventDefault()
       this.lobbyChannel.push("force_start:upvote", {})
     })

@@ -9,6 +9,7 @@ const Game = {
       "d": "move_right"
     }
 
+    this.$gameEndModal = $("#gameEndModal")
     this.gameChannel = socket.channel(game_id)
     this.gameChannel.join()
       .receive("ok", (resp) => {
@@ -30,9 +31,12 @@ const Game = {
     })
 
     this.gameChannel.on("game:end", (data) => {
-      $("#gameEndModal").modal("show")
+      const player = data[Object.keys(data)[0]]
+      this.$gameEndModal.find('.modal-body').text(`${player.username} has won!`)
 
-      $("#gameEndModal").on('hide.bs.modal', function (e) {
+      this.$gameEndModal.modal("show")
+
+      this.$gameEndModal.on('hidden.bs.modal', function (e) {
         window.location.replace("/")
       })
       
@@ -56,7 +60,6 @@ const Game = {
 
     window.addEventListener("keyup", (e) => {
       const key = e.key
-      console.log(e, key, "keyup")
       if(key in this.commands) {
         const command = {
           command: this.commands[key],
