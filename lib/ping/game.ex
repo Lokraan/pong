@@ -154,48 +154,50 @@ defmodule Ping.Game do
   def handle_info(:update, state) do
     {updated_players, updated_balls} = Engine.get_game_updates(state)
 
-    new_state =
+    state =
       state
       |> Map.replace!(:players, updated_players)
       |> Map.replace!(:balls, updated_balls)
 
     GameChannel.broadcast_game_update(
-      new_state.game_id,
+      state.game_id,
       %{
-        players: new_state.players,
-        balls: new_state.balls,
-        walls: new_state.walls
+        players: state.players,
+        balls: state.balls,
+        walls: state.walls
       }
     )
 
-    if map_size(new_state.players) > 1 do
+    if map_size(state.players) > 1 do
       schedule_updates()
 
-      {:noreply, new_state}
+      {:noreply, state}
     else
-      GameChannel.broadcast_game_end(new_state.game_id)
+      GameChannel.broadcast_game_end(self(), state.game_id, state.players)
 
-      {:stop, :normal, new_state}
+      {:noreply, state}
     end
-  end
-
-  def handle_call(:id, _from, state) do
-    state.id
   end
 
   @doc """
   Handle's `:player_leave` by removing the player's data.
   """
-  def handle_call({:player_leave, p_id}, _from, state) do
+  def handle_info({:player_leave, p_id}, _from, state) do
     new_players = Map.delete(state.players, p_id)
 
     state = %{state | players: new_players}
 
-    if map_size(state.players) == 0 do
-      {:stop, :normal, :no_players, state}
+    if map_size(state.players) == 1 do
+      GameChannel.broadcast_game_end(self(), state.game_id, state.players)
+
+      {:noreply, state}
     else
-      {:reply, state, state}
+      {:noreply, state}
     end
+  end
+
+  def handle_call(:id, _from, state) do
+    state.id
   end
 
   def handle_call({:has_player, player_id}, _from, state) do

@@ -66,10 +66,10 @@ defmodule PingWeb.LobbyChannel do
 
         {:ok, resp, socket}
 
-      {:now_full, players} ->
+      {:now_full, players, pid} ->
         socket = assign(socket, :lobby_id, lobby_id)
 
-        start_game(lobby_id, players, socket)
+        start_game(pid, lobby_id, players, socket)
 
       :already_joined ->
         socket = assign(socket, :lobby_id, lobby_id)
@@ -86,7 +86,10 @@ defmodule PingWeb.LobbyChannel do
     end
   end
 
-  def start_game(lobby_id, players, socket) do
+  def start_game(lobby_pid, lobby_id, players, socket) do
+    Agent.start_link(fn ->
+      DynamicSupervisor.terminate_child(LobbySupervisor, lobby_pid) end)
+
     game_id = gen_id()
     {:ok, _pid} = DynamicSupervisor.start_child(Ping.GameSupervisor, {
       Ping.Game, game_id: game_id, players: players
@@ -95,7 +98,7 @@ defmodule PingWeb.LobbyChannel do
     PingWeb.Endpoint.broadcast!(topic(lobby_id), "game:start",
       %{game_id: game_id})
 
-    {:ok, %{game_id: game_id}, socket}
+    {:reply, {:ok, %{game_id: game_id}}, socket}
   end
 
   def broadcast_update(lobby_id, data) do
@@ -108,7 +111,6 @@ defmodule PingWeb.LobbyChannel do
   Handles a player's leave.
   """
   def handle_in("lobby:leave", _, socket) do
-    IO.inspect "handling leave"
     lobby_id = socket.assigns.lobby_id
     user_id = socket.assigns.user_id
 
@@ -122,8 +124,8 @@ defmodule PingWeb.LobbyChannel do
     user_id = socket.assigns.user_id
 
     case Lobby.force_start_vote(lobby_id, user_id) do
-      {:force_start, players} ->
-        start_game(lobby_id, players, socket)
+      {:force_start, players, pid} ->
+        start_game(pid, lobby_id, players, socket)
 
       _ ->
         {:reply, :ok, socket}

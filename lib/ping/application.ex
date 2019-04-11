@@ -7,10 +7,10 @@ defmodule Ping.Application do
 
   def start(_type, _args) do
     children = [
-      {DynamicSupervisor, strategy: :one_for_one, 
-        name: Ping.LobbySupervisor},
       {DynamicSupervisor, strategy: :one_for_one,
-        name: Ping.GameSupervisor},
+        name: Ping.LobbySupervisor, restart: :transient},
+      {DynamicSupervisor, strategy: :one_for_one,
+        name: Ping.GameSupervisor, restart: :transient},
       {Registry, keys: :unique, name: Ping.LobbyRegistry},
       {Registry, keys: :unique, name: Ping.GameRegistry},
       # Start the endpoint when the application starts

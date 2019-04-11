@@ -25,6 +25,8 @@ defmodule Ping.Lobby do
       max_players: config(:max_players) || 6
     }
 
+    IO.inspect(lobby_id, label: :lobby_init)
+
     {:ok, state}
   end
 
@@ -94,7 +96,12 @@ defmodule Ping.Lobby do
         |> Map.replace!(:players, new_players)
 
       if ((players + 1) == state.max_players) do
-        {:stop, :shutdown, {:now_full, state.players}, state}
+        new_state = %Lobby{
+          id: state.id,
+          max_players: state.max_players
+        }
+
+        {:reply, {:now_full, state.players}, new_state}
       else
 
         LobbyChannel.broadcast_update(state.id, state)
@@ -110,25 +117,25 @@ defmodule Ping.Lobby do
   def handle_call({:player_leave, player_id}, _from, state) do
     new_players = Map.delete(state.players, player_id)
 
-    new_state = %{state | players: new_players}
+    state = %{state | players: new_players}
 
-    LobbyChannel.broadcast_update(new_state.id, new_state)
-    {:reply, :ok, new_state}
+    LobbyChannel.broadcast_update(state.id, state)
+    {:reply, :ok, state}
   end
 
   def handle_call({:force_start_upvote, player_id}, _from, state) do
-    new_state =
+    state =
       %{state | force_start_votes: MapSet.put(state.force_start_votes, player_id)}
 
-    LobbyChannel.broadcast_update(state.id, new_state)
+    LobbyChannel.broadcast_update(state.id, state)
 
-    votes = MapSet.size(new_state.force_start_votes)
+    votes = MapSet.size(state.force_start_votes)
     p_count = map_size(state.players)
 
     if votes > 1 and votes == p_count do
-      {:reply, {:force_start, new_state.players}, new_state}
+      {:reply, {:force_start, state.players, self()}, state}
     else
-      {:reply, :ok, new_state}
+      {:reply, :ok, state}
     end
   end
 

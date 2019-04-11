@@ -1,14 +1,16 @@
 defmodule PingWeb.GameChannel do
   use PingWeb, :channel
 
-  alias Ping.Game
+  alias Ping.{Game, GameSupervisor}
 
   def broadcast_game_update(game_id, data) do
     PingWeb.Endpoint.broadcast!(topic(game_id), "game:update", data)
   end
 
-  def broadcast_game_end(game_id) do
-    PingWeb.Endpoint.broadcast!(topic(game_id), "game:end", %{})
+  def broadcast_game_end(game_pid, game_id, players) do
+    PingWeb.Endpoint.broadcast!(topic(game_id), "game:end", players)
+
+    DynamicSupervisor.terminate_child(GameSupervisor, game_pid)
   end
 
   def join("game:" <> _game_id, _params, socket) do
@@ -28,9 +30,7 @@ defmodule PingWeb.GameChannel do
     game_id = socket.assigns.game_id
     user_id = socket.assigns.user_id
 
-    if Game.player_leave(game_id, user_id) == :no_players do
-      PingWeb.Endpoint.broadcast!(topic(game_id), "game:end", %{})
-    end
+    Game.player_leave(game_id, user_id)
 
     {:reply, {:ok, %{}}, socket}
   end
