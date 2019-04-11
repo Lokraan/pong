@@ -110,7 +110,9 @@ defmodule Ping.Game.Setup do
 
   def gen_game_ball do
     {x, y} = get_field_center()
-    %{aaa: Ball.new_ball(x, y, :rand.uniform() * 2 - 1, :rand.uniform() * 2 - 1)}
+    {vx, vy} = normalize_vals(:rand.uniform(), :rand.uniform())
+
+    %{aaa: Ball.new_ball(x, y, vx, vy)}
   end
 
   @spec config(atom()) :: term

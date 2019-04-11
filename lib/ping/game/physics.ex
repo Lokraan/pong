@@ -1,7 +1,7 @@
 defmodule Ping.Game.Physics do
   alias Ping.Game.{Ball, Vector}
 
-  @radius_buffer 0
+  @radius_buffer 10
 
   defp radius_buffer do
     @radius_buffer

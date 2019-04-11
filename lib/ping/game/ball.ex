@@ -23,7 +23,10 @@ defmodule Ping.Game.Ball do
   end
 
   defp speed(ball) do
-    :math.log2(ball.bounces + 2)
+    speed = :math.sqrt(ball.bounces + 1)
+
+    thresh = :math.floor(ball.radius - :math.sqrt(ball.radius))
+    if speed > thresh, do: thresh, else: speed
   end
 
   def update(ball) do
