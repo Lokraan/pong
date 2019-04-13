@@ -1,7 +1,8 @@
 defmodule Ping.Game.Physics do
   alias Ping.Game.{Ball, Vector}
 
-  @radius_buffer 10
+  @radius_buffer 2
+  @rand_amt 0.05
 
   defp radius_buffer do
     @radius_buffer
@@ -69,12 +70,25 @@ defmodule Ping.Game.Physics do
     end
   end
 
+  defp vector_rand_amt do
+    @rand_amt
+  end
+
+  defp randomize_vector(%Vector{x: x, y: y}) do
+    div_ = 1 + vector_rand_amt()
+    %Vector{
+      x: (:random.uniform(1) * vector_rand_amt() + x) / div_,
+      y: (:random.uniform(1) * vector_rand_amt() + y) / div_
+    }
+  end
+
   def wall_ball_collision(%Ball{} = b, w) do
     case get_circle_dist(b, w) do
       {:ok, dist} ->
         d = dist + :math.sqrt(b.radius)
 
-        v = Vector.reflect(b.vector, w.reflection_vector)
+        reflect_vector = randomize_vector(w.reflection_vector)
+        v = Vector.reflect(b.vector, reflect_vector)
 
         b =
           b

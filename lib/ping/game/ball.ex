@@ -7,7 +7,7 @@ defmodule Ping.Game.Ball do
     x: 0,
     y: 0,
     vector: %Vector{},
-    radius: 10,
+    radius: 12,
     bounces: 0
   )
 
