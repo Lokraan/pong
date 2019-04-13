@@ -62,12 +62,26 @@ defmodule Ping.Game do
   )
   """
   def init([game_id, players]) do
+    p_count = map_size(players)
+
+    walls =
+      cond do
+        p_count == 2 ->
+          4
+
+        rem(p_count, 2) == 1 ->
+          p_count * 2
+
+        true ->
+          p_count
+      end
+
     state = %Game{
       game_id: game_id,
-      players: Setup.gen_game_players(players),
+      players: Setup.gen_game_players(players, walls),
       max_players: config(:max_players) || 6,
-      balls: Setup.gen_game_ball(),
-      walls: Setup.gen_game_walls()
+      balls: Setup.gen_game_ball(map_size(players), walls),
+      walls: Setup.gen_game_walls(walls)
     }
 
     start()

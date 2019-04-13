@@ -110,19 +110,19 @@ defmodule Ping.Game.Engine do
       type == "press" ->
         case command do
           "move_left" ->
-            &Player.move_left/1
+            &Player.move_left/2
 
           "move_right" ->
-            &Player.move_right/1
+            &Player.move_right/2
 
           "rotate_left" ->
-            &Player.rotate_left/1
+            &Player.rotate_left/2
 
           "rotate_right" ->
-            &Player.rotate_right/1
+            &Player.rotate_right/2
         end
       type == "release" ->
-        &Player.stop/1
+        &Player.stop/2
     end
 
     update_player_state(cmd, state, player, player_id)
@@ -136,7 +136,7 @@ defmodule Ping.Game.Engine do
   end
 
   defp update_player_state(command, state, player, player_id) do
-    updated_player = command.(player)
+    updated_player = command.(player, length(state.walls) - 1)
 
     update_player_state(state, updated_player, player_id)
   end

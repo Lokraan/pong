@@ -3,7 +3,7 @@ defmodule Ping.Game.Player do
   alias Ping.Game.{Vector, Setup}
 
   @derive Jason.Encoder
-  
+
   @enforce_keys [:username, :wall_index]
   defstruct(
     username: :string,
@@ -44,7 +44,7 @@ defmodule Ping.Game.Player do
     Map.replace!(player, :vector, new_v)
   end
 
-  def stop(player) do
+  def stop(player, _walls) do
     update_player_vector(player, 0, 0)
   end
 
@@ -61,23 +61,23 @@ defmodule Ping.Game.Player do
   end
 
   # method to move/rotate_left/right then method to get camera pos
-  def move_right(player) do
-    {vx, vy} = Setup.get_wall_edge_vector(player.wall_index)
+  def move_right(player, walls) do
+    {vx, vy} = Setup.get_wall_edge_vector(player.wall_index, walls)
 
     update_player_vector(player, vx, vy)
   end
 
-  def move_left(player) do
-    {vx, vy} = Setup.get_wall_edge_vector(player.wall_index)
+  def move_left(player, walls) do
+    {vx, vy} = Setup.get_wall_edge_vector(player.wall_index, walls)
 
     update_player_vector(player, -1 * vx, -1 * vy)
   end
 
-  def rotate_right(player) do
+  def rotate_right(player, _walls) do
     player
   end
-  
-  def rotate_left(player) do
+
+  def rotate_left(player, _walls) do
     player
   end
 
